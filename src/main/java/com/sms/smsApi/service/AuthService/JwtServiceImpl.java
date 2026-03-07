@@ -21,8 +21,11 @@ public class JwtServiceImpl implements JwtService {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${security.jwt.expiration}")
+    @Value("${security.jwt.expiration-ms}")
     private Long jwtExpiration;
+
+    @Value("${security.jwt.refresh-expiration-ms}")
+    private long refreshTokenExpiration;
 
     @Override
     public String extractUsername(String token){
@@ -37,19 +40,24 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String generateToken(UserDetails userDetails){
-        return generateToken(new HashMap<>(), userDetails);
+        return generateAccessToken(new HashMap<>(), userDetails);
     }
 
     @Override
-    public String generateToken(Map<String, Object> extractClaims, UserDetails userDetails){
-        return buildToken(extractClaims, userDetails, jwtExpiration);
+    public String generateAccessToken(Map<String, Object> extractClaims, UserDetails userDetails){
+        return buildAccessToken(extractClaims, userDetails, jwtExpiration);
+    }
+
+    @Override
+    public String generateRefreshToken(UserDetails userDetails){
+        return buildAccessToken(new HashMap<>(), userDetails, refreshTokenExpiration);
     }
 
     public Long getExpirationTime(){
         return jwtExpiration;
     }
 
-    private String buildToken(
+    private String buildAccessToken(
             Map<String, Object> extractClaims,
             UserDetails userDetails,
             long expiration
@@ -60,7 +68,7 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey(), SignatureAlgorithm.ES256)
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
