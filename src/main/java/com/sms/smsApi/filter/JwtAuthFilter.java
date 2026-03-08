@@ -79,7 +79,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
  }
 
-    private UsernamePasswordAuthenticationToken getAuthentication(String token) throws ExpiredJwtException {
+    private UsernamePasswordAuthenticationToken getAuthentication(String token) {
 
         String username = jwtService.extractUsername(token);
 
@@ -90,12 +90,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
         if (!jwtService.isTokenValid(token, userDetails)) {
-            return null;
-        }
-
-        var tokenEntity = tokenRepository.findByToken(token).orElse(null);
-
-        if (tokenEntity == null || tokenEntity.isExpired() || tokenEntity.isRevoked()) {
             return null;
         }
 

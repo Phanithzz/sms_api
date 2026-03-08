@@ -58,6 +58,7 @@ public class UserController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<User>> createUser(
             @RequestBody RegistrationDto input,
             @AuthenticationPrincipal User currentUser) {  // Inject directly
