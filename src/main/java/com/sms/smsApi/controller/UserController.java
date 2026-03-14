@@ -45,7 +45,7 @@ public class UserController {
 
 
     @GetMapping("/users")
-    @PreAuthorize("hasRole('ADMIN')")
+   // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<User>>> getAllUsers(
             @AuthenticationPrincipal User currentUser  // ← Spring injects this automatically
     ) {
@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @PostMapping("/create")
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<User>> createUser(
             @RequestBody RegistrationDto input,
             @AuthenticationPrincipal User currentUser) {  // Inject directly

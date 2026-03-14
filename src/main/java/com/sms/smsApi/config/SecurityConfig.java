@@ -26,10 +26,12 @@ public class SecurityConfig {
 
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthFilter jwtAuthFilter;
+    private final DynamicAuthorizationManager dynamicAuthorizationManager;
 
-    public SecurityConfig(AuthenticationProvider authenticationProvider, JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(AuthenticationProvider authenticationProvider, JwtAuthFilter jwtAuthFilter, DynamicAuthorizationManager dynamicAuthorizationManager) {
         this.authenticationProvider = authenticationProvider;
         this.jwtAuthFilter = jwtAuthFilter;
+        this.dynamicAuthorizationManager = dynamicAuthorizationManager;
     }
 
     @Bean
@@ -54,7 +56,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 //                        .requestMatchers("/api/v1/users/**").permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().access(dynamicAuthorizationManager))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
