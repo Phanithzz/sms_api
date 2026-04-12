@@ -187,13 +187,15 @@ public class AuthServiceImpl implements AuthService {
         }
     }
     @Override
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // FIX: Read refresh token from HTTP-only cookie, not Authorization header
         String refreshToken = extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null) {
             LOGGER.warn("Refresh token cookie missing");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token missing");
             return;
+
         }
 
         try {
@@ -222,11 +224,17 @@ public class AuthServiceImpl implements AuthService {
 
                 // Set new refresh token cookie
                 response.addCookie(createRefreshTokenCookie(newRefreshToken));
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_OK);
 
                 var authResponse = AuthResponse.builder()
                         .accessToken(newAccessToken)
                         .build();
-                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.writeValue(response.getOutputStream(), authResponse);
+                response.getOutputStream().flush();
+
+                //new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to write refresh token response", e);

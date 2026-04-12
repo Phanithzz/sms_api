@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -125,7 +126,7 @@ public class AuthController {
     public void refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
-    ){
+    ) throws IOException {
         authService.refreshToken(request,response);
     }
 

@@ -42,6 +42,7 @@ public class DynamicAuthorizationManager implements AuthorizationManager<Request
 
         // Find matching permission for this URL + Method
         boolean hasAccess = permissions.stream()
+                .filter(p -> p.getIsEnabled())
                 .filter(p -> p.getHttpMethod().equalsIgnoreCase(requestMethod))
                 .filter(p -> pathMatches(p.getUrl(), requestUrl))
                 .anyMatch(p -> {

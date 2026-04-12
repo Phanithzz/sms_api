@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 
+import java.io.IOException;
+
 public interface AuthService {
 //    User signup(RegistrationDto input);
     LoginResponse authenticate(LoginDto input, HttpServletResponse response) throws InvalidCredentialsException, AccountDisabledException, AccountNotVerifiedException;
@@ -22,7 +24,7 @@ public interface AuthService {
     void resendVerificationCode(String email);
     void sendVerificationEmail(User user);
 
-    void refreshToken(HttpServletRequest request, HttpServletResponse response);
+    void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException;
     boolean logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication);
 }
 

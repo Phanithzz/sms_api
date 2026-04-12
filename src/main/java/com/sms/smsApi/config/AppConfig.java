@@ -26,6 +26,8 @@ public class AppConfig {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found!"));
     }
 
+
+
     @Bean
     BCryptPasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();

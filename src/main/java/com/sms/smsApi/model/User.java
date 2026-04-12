@@ -1,5 +1,7 @@
 package com.sms.smsApi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,6 +35,7 @@ public class User implements UserDetails {
     private String lastName;
 
     @Column(name = "username", unique = true)
+    @JsonProperty("username")
     private String username;
 
     @Column(name = "email", nullable = false, unique = true)
@@ -72,7 +75,7 @@ public class User implements UserDetails {
     private Timestamp updatedAt  = new Timestamp(System.currentTimeMillis());
 
     @Column(name = "deleted_at")
-    private Timestamp deletedAt = new Timestamp(System.currentTimeMillis());
+    private Timestamp deletedAt;
 
 
     public User(Long userId, String firstName, String lastName, String username, String email, String password, boolean enabled, boolean verified, boolean locked, int attemptedCount, Timestamp lockUntil, Long createdBy, Timestamp createdAt, Timestamp deletedAt, Timestamp updatedAt) {
@@ -111,9 +114,11 @@ public class User implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public String getUsername() {
         return email;
     }
+
 
     @Override
     public boolean isAccountNonExpired() {
@@ -135,4 +140,7 @@ public class User implements UserDetails {
         return enabled;
     }
 
+    public String getActualUsername(){
+        return username;
+    }
 }
