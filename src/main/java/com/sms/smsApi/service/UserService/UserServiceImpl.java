@@ -8,6 +8,8 @@ import com.sms.smsApi.model.Role;
 import com.sms.smsApi.model.User;
 import com.sms.smsApi.model.UserRole;
 import com.sms.smsApi.repository.RoleRepository;
+import com.sms.smsApi.repository.StudentRepository;
+import com.sms.smsApi.repository.TeacherRepository;
 import com.sms.smsApi.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,15 +37,19 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
     private final UserMapper userMapper;
+    private final StudentRepository studentRepository;
+    private final TeacherRepository teacherRepository;
 
     public UserServiceImpl(UserRepository userRepository,
                            RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate, UserMapper userMapper) {
+                           PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate, UserMapper userMapper, StudentRepository studentRepository, TeacherRepository teacherRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jdbcTemplate = jdbcTemplate;
         this.userMapper = userMapper;
+        this.studentRepository = studentRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     @Override
@@ -89,18 +95,43 @@ public class UserServiceImpl implements UserService {
         user.setVerified(false);
         user.setLocked(false);
         user.setCreatedBy(currentUser.getUserId());
-        user.setCreatedBy(null);
+        // user.setCreatedBy(null);
         user.setAttemptedCount(0);
         user.setLockUntil(null);
         user.setCreatedAt(user.getCreatedAt());
         user.setUpdatedAt(user.getUpdatedAt());
         user.setDeletedAt(user.getDeletedAt());
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Long newUserId = savedUser.getUserId();
 
         try {
             boolean isSuccess = insertRole(input, user.getUserId());
-            if(!isSuccess){
+            if (!isSuccess) {
                 return null;
+            }
+
+            for (Integer roleId : input.getRoleId()) {
+                if (roleId.equals(UserRole.STUDENT.getCode())) {
+                    boolean insertStudent = insertStudentViaUser(input, savedUser.getUserId(), currentUser.getUserId());
+                    if (!insertStudent) {
+                        LOGGER.error("Error insert student for student ID: {}", savedUser.getUserId());
+                    }
+                } else if (roleId.equals(UserRole.TEACHER.getCode())) {
+                    boolean insertTeacher = insertTeacherViaUser(input, savedUser.getUserId(), currentUser.getUserId());
+                    if (!insertTeacher) {
+                        LOGGER.error("Error insert teacher for teacher ID: {}", savedUser.getUserId());
+                    }
+                }
+//                else if (roleId.equals(UserRole.PARENT.getCode())) {
+//                    boolean insertTeacher = insertTeacherViaUser(input,newUserId, user.getUserId());
+//                    if(!insertTeacher){
+//                        LOGGER.error("Error insert parent for parent ID: {}", newUserId);
+//                    }
+//                }
+                else {
+                    LOGGER.info("Admin role has created for user {}", savedUser.getUserId());
+                }
             }
             return userRepository.save(user);
         } catch (Exception e) {
@@ -113,17 +144,17 @@ public class UserServiceImpl implements UserService {
     public User findUser(String usernameOrEmail) {
 
         String sql = """
-        SELECT
-            u.user_id,
-            u.username,
-            u.email,
-            u.is_enabled,
-            r.role_name
-        FROM users u
-        LEFT JOIN user_roles ur ON ur.user_id = u.user_id
-        LEFT JOIN roles r ON r.role_id = ur.role_id
-        WHERE u.username = ? OR u.email = ?
-        """;
+                SELECT
+                    u.user_id,
+                    u.username,
+                    u.email,
+                    u.is_enabled,
+                    r.role_name
+                FROM users u
+                LEFT JOIN user_roles ur ON ur.user_id = u.user_id
+                LEFT JOIN roles r ON r.role_id = ur.role_id
+                WHERE u.username = ? OR u.email = ?
+                """;
 
         return jdbcTemplate.query(sql, new Object[]{usernameOrEmail, usernameOrEmail}, rs -> {
 
@@ -182,9 +213,9 @@ public class UserServiceImpl implements UserService {
 
         // Apply field updates (only non-null fields)
         if (input.getFirstName() != null) user.setFirstName(input.getFirstName());
-        if (input.getLastName() != null)  user.setLastName(input.getLastName());
-        if (input.getEnabled() != null)   user.setEnabled(input.getEnabled());
-        if (input.getLocked() != null)    user.setLocked(input.getLocked());
+        if (input.getLastName() != null) user.setLastName(input.getLastName());
+        if (input.getEnabled() != null) user.setEnabled(input.getEnabled());
+        if (input.getLocked() != null) user.setLocked(input.getLocked());
 
         user.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
 
@@ -234,9 +265,9 @@ public class UserServiceImpl implements UserService {
 
     private void insertUpdatedRoles(List<Integer> roleIds, Long userId) {
         String sql = """
-        INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?)
-        """;
+                INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?)
+                """;
         LocalDateTime now = LocalDateTime.now();
         for (Integer roleId : roleIds) {
             int rows = jdbcTemplate.update(sql, userId, roleId, now, now);
@@ -248,9 +279,9 @@ public class UserServiceImpl implements UserService {
 
     private boolean insertRole(RegistrationDto input, Long userId) {
         String query = """
-            INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?)
-            """;
+                INSERT INTO user_roles (user_id, role_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?)
+                """;
 
         boolean allSuccess = true;
         LocalDateTime now = LocalDateTime.now();
@@ -272,4 +303,60 @@ public class UserServiceImpl implements UserService {
         return allSuccess;
     }
 
+    private String generateStudentID() {
+
+        String latestId = studentRepository.findLatestStudentId();
+
+        if (latestId == null) {
+            return "ST000001";
+        }
+
+        int number = Integer.parseInt(latestId.substring(2));
+        number++;
+
+        return String.format("ST%06d", number);
+    }
+
+    private String generateTeacherID() {
+        String latest = teacherRepository.findLatestTeacherIdByPrefix("TH");
+
+        if (latest == null) {
+            return "TH000001";
+        }
+
+        int seq = Integer.parseInt(latest.substring(2)); // remove "TH"
+        return String.format("TH%06d", seq + 1);
+    }
+
+    private boolean insertStudentViaUser(RegistrationDto input, Long newUserId, Long createdUserId) {
+        String sql = """
+                INSERT INTO students (student_id, user_id, first_name_en, last_name_en, email, created_at, created_by)
+                VALUES (?,?,?,?,?,?,?)
+                """;
+        String studentId = generateStudentID();
+
+        Object[] params = {studentId, newUserId, input.getFirstName(), input.getLastName(),
+                input.getEmail(), new Timestamp(System.currentTimeMillis()), createdUserId
+        };
+
+        int success = jdbcTemplate.update(sql, params);
+
+        return success > 0;
+    }
+
+    private boolean insertTeacherViaUser(RegistrationDto input, Long newUserId, Long createdUserId) {
+        String sql = """
+                INSERT INTO teachers (teacher_id, user_id, first_name_en, last_name_en, email, created_at, created_by)
+                VALUES (?,?,?,?,?,?,?)
+                """;
+        String id = generateTeacherID();
+
+        Object[] params = {id, newUserId, input.getFirstName(), input.getLastName(),
+                input.getEmail(), new Timestamp(System.currentTimeMillis()), createdUserId
+        };
+
+        int success = jdbcTemplate.update(sql, params);
+
+        return success > 0;
+    }
 }
