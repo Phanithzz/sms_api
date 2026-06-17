@@ -4,13 +4,11 @@ import com.sms.smsApi.dto.RegistrationDto;
 import com.sms.smsApi.dto.UserResponseDto;
 import com.sms.smsApi.dto.requestDto.UpdateUserDto;
 import com.sms.smsApi.mapper.UserMapper;
+import com.sms.smsApi.model.Parent;
 import com.sms.smsApi.model.Role;
 import com.sms.smsApi.model.User;
 import com.sms.smsApi.model.UserRole;
-import com.sms.smsApi.repository.RoleRepository;
-import com.sms.smsApi.repository.StudentRepository;
-import com.sms.smsApi.repository.TeacherRepository;
-import com.sms.smsApi.repository.UserRepository;
+import com.sms.smsApi.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -39,10 +37,11 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final StudentRepository studentRepository;
     private final TeacherRepository teacherRepository;
+    private final ParentRepository parentRepository;
 
     public UserServiceImpl(UserRepository userRepository,
                            RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate, UserMapper userMapper, StudentRepository studentRepository, TeacherRepository teacherRepository) {
+                           PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate, UserMapper userMapper, StudentRepository studentRepository, TeacherRepository teacherRepository, ParentRepository parentRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -50,6 +49,7 @@ public class UserServiceImpl implements UserService {
         this.userMapper = userMapper;
         this.studentRepository = studentRepository;
         this.teacherRepository = teacherRepository;
+        this.parentRepository = parentRepository;
     }
 
     @Override
@@ -123,12 +123,12 @@ public class UserServiceImpl implements UserService {
                         LOGGER.error("Error insert teacher for teacher ID: {}", savedUser.getUserId());
                     }
                 }
-//                else if (roleId.equals(UserRole.PARENT.getCode())) {
-//                    boolean insertTeacher = insertTeacherViaUser(input,newUserId, user.getUserId());
-//                    if(!insertTeacher){
-//                        LOGGER.error("Error insert parent for parent ID: {}", newUserId);
-//                    }
-//                }
+                else if (roleId.equals(UserRole.PARENT.getCode())) {
+                    boolean insertParent = insertParentViaUser(input,savedUser.getUserId(), user.getUserId());
+                    if(!insertParent){
+                        LOGGER.error("Error insert parent for parent ID: {}", savedUser.getUserId());
+                    }
+                }
                 else {
                     LOGGER.info("Admin role has created for user {}", savedUser.getUserId());
                 }
@@ -328,15 +328,27 @@ public class UserServiceImpl implements UserService {
         return String.format("TH%06d", seq + 1);
     }
 
+    private String generateParentID() {
+        String latest = parentRepository.findLatestParentId("P");
+
+        if (latest == null) {
+            return "P000001";
+        }
+
+        int seq = Integer.parseInt(latest.substring(1)); // remove "P"
+        return String.format("P%06d", seq + 1);
+    }
+
+
     private boolean insertStudentViaUser(RegistrationDto input, Long newUserId, Long createdUserId) {
         String sql = """
-                INSERT INTO students (student_id, user_id, first_name_en, last_name_en, email, created_at, created_by)
-                VALUES (?,?,?,?,?,?,?)
+                INSERT INTO students (student_id, user_id, first_name_en, last_name_en, email, enrolled_date, created_at, created_by)
+                VALUES (?,?,?,?,?,?,?,?)
                 """;
         String studentId = generateStudentID();
 
         Object[] params = {studentId, newUserId, input.getFirstName(), input.getLastName(),
-                input.getEmail(), new Timestamp(System.currentTimeMillis()), createdUserId
+                input.getEmail(), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), createdUserId
         };
 
         int success = jdbcTemplate.update(sql, params);
@@ -346,17 +358,38 @@ public class UserServiceImpl implements UserService {
 
     private boolean insertTeacherViaUser(RegistrationDto input, Long newUserId, Long createdUserId) {
         String sql = """
-                INSERT INTO teachers (teacher_id, user_id, first_name_en, last_name_en, email, created_at, created_by)
-                VALUES (?,?,?,?,?,?,?)
+                INSERT INTO teachers (teacher_id, user_id, first_name_en, last_name_en, email, hired_date, created_at, created_by)
+                VALUES (?,?,?,?,?,?,?,?)
                 """;
         String id = generateTeacherID();
 
         Object[] params = {id, newUserId, input.getFirstName(), input.getLastName(),
-                input.getEmail(), new Timestamp(System.currentTimeMillis()), createdUserId
+                input.getEmail(), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), createdUserId
         };
 
         int success = jdbcTemplate.update(sql, params);
 
         return success > 0;
     }
+
+
+    // Note: insert only father's name first
+    private boolean insertParentViaUser(RegistrationDto input, Long newUserId, Long createdUserId) {
+        String sql = """
+                INSERT INTO parents (parent_id, user_id, father_name_en ,created_at)
+                VALUES (?,?,?,?)
+                """;
+        String id = generateParentID();
+
+        Object[] params = {id, newUserId, input.getFirstName() + input.getLastName(),
+                 new Timestamp(System.currentTimeMillis())
+        };
+
+        int success = jdbcTemplate.update(sql, params);
+
+
+        return success > 0;
+    }
+
+
 }
