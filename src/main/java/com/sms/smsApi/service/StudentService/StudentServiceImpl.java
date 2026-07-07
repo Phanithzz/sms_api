@@ -1,10 +1,13 @@
 package com.sms.smsApi.service.StudentService;
 
 import com.sms.smsApi.dto.requestDto.StudentRequestFilter;
+import com.sms.smsApi.exception.ResourceNotFoundException;
 import com.sms.smsApi.model.Student;
+import com.sms.smsApi.repository.StudentRepository;
 import com.sms.smsApi.service.UserService.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,9 +21,10 @@ import java.util.Map;
 public class StudentServiceImpl implements StudentService{
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
     private final NamedParameterJdbcTemplate jdbcTemplate;
-
-    public StudentServiceImpl(NamedParameterJdbcTemplate jdbcTemplate) {
+    private final StudentRepository studentRepository;
+    public StudentServiceImpl(NamedParameterJdbcTemplate jdbcTemplate, StudentRepository studentRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.studentRepository = studentRepository;
     }
     public Map<String, Object> getStudents(StudentRequestFilter req) {
 
@@ -128,5 +132,50 @@ public class StudentServiceImpl implements StudentService{
         result.put("size", req.getSize());
 
         return result;
+    }
+
+
+    @Override
+    public Student updateStudent(Student student) {
+
+        Student existing = studentRepository.findStudentById(student.getStudentId());
+
+        if (existing == null) {
+            throw new RuntimeException(
+                    "Student not found with id: " + student.getStudentId());
+        }
+
+        existing.setStudentFirstNameEn(student.getStudentFirstNameEn());
+        existing.setStudentLastNameEn(student.getStudentLastNameEn());
+        existing.setStudentFirstNameKh(student.getStudentFirstNameKh());
+        existing.setStudentLastNameKh(student.getStudentLastNameKh());
+
+        existing.setFullNameEn(student.getFullNameEn());
+        existing.setFullNameKh(student.getFullNameKh());
+
+        existing.setGender(student.getGender());
+        existing.setDateOfBirth(student.getDateOfBirth());
+        existing.setPlaceOfBirth(student.getPlaceOfBirth());
+        existing.setNationalId(student.getNationalId());
+
+        existing.setPhoneNumber(student.getPhoneNumber());
+        existing.setCurrentAddress(student.getCurrentAddress());
+        existing.setProvince(student.getProvince());
+
+        existing.setGradeLevel(student.getGradeLevel());
+        existing.setHomeroomClassId(student.getHomeroomClassId());
+
+        existing.setEnrolledDate(student.getEnrolledDate());
+        existing.setEndDate(student.getEndDate());
+
+        existing.setStatus(student.getStatus());
+        existing.setGpa(student.getGpa());
+
+        existing.setProfilePhoto(student.getProfilePhoto());
+
+        existing.setEmergencyContactName(student.getEmergencyContactName());
+        existing.setEmergencyContactPhone(student.getEmergencyContactPhone());
+
+        return studentRepository.save(existing);
     }
 }

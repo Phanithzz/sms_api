@@ -27,4 +27,9 @@ public class StudentController {
 //    public ResponseEntity<?> create(@RequestBody StudentCreateDto dto) {
 //
 //    }
+@PutMapping("/update")
+public ResponseEntity<?> update(@RequestBody Student student) {
+    Student updatedStudent = studentService.updateStudent(student);
+    return ResponseEntity.ok(updatedStudent);
+}
 }
