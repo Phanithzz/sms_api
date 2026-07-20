@@ -18,7 +18,7 @@ public class AcademicYear {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "academic_year_id")
-    private Integer academicYearId;
+    private Long academicYearId;
 
     @Column(name = "year_name", nullable = false, unique = true)
     private String yearName;

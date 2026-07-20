@@ -256,6 +256,14 @@ public class UserServiceImpl implements UserService {
         LOGGER.info("User soft-deleted: userId={}, deletedBy={}", userId, currentUser.getUserId());
     }
 
+
+    @Override
+    public UserResponseDto getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return mapToResponse(user);
+    }
 // ── Private helpers ──────────────────────────────────────────────────────────
 
     private void deleteExistingRoles(Long userId) {
@@ -391,5 +399,19 @@ public class UserServiceImpl implements UserService {
         return success > 0;
     }
 
+    private UserResponseDto mapToResponse(User user) {
+        UserResponseDto dto = new UserResponseDto();
+
+        dto.setUserId(user.getUserId());
+        dto.setUsername(user.getUsername());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setEmail(user.getEmail());
+
+        dto.setRoles(user.getRoles());
+        dto.setEnabled(user.isEnabled());
+
+        return dto;
+    }
 
 }

@@ -15,4 +15,5 @@ public interface UserService {
     Page<UserResponseDto> searchUsers(String searchTerm, Pageable pageable);
     UserResponseDto updateUser(Long userId, UpdateUserDto input, User currentUser);
     void deleteUser(Long userId, User currentUser);
+    UserResponseDto getUserById(Long id);
 }

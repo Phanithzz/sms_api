@@ -106,6 +106,19 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "User deleted successfully", null));
     }
 
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(
+            @PathVariable Long id) {
+
+        LOGGER.debug("REST request to get user by id: {}", id);
+
+        UserResponseDto user = userService.getUserById(id);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "User retrieved successfully", user)
+        );
+    }
     /**
      * Creates a Pageable with validated sorting.
      * Defaults to sorting by id ASC if the field is invalid or blank.
