@@ -9,6 +9,9 @@ import com.sms.smsApi.model.Role;
 import com.sms.smsApi.model.User;
 import com.sms.smsApi.model.UserRole;
 import com.sms.smsApi.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.mapstruct.Mapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -29,7 +32,8 @@ import java.util.NoSuchElementException;
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
-
+    @PersistenceContext
+    private EntityManager entityManager;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -227,6 +231,10 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(user);
         LOGGER.info("User updated successfully: userId={}, updatedBy={}", userId, currentUser.getUserId());
+
+
+        entityManager.flush();
+        entityManager.refresh(user);
         return userMapper.toResponse(saved);
     }
 
@@ -261,8 +269,7 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return mapToResponse(user);
+        return userMapper.toResponse(user);
     }
 // ── Private helpers ──────────────────────────────────────────────────────────
 
@@ -398,7 +405,7 @@ public class UserServiceImpl implements UserService {
 
         return success > 0;
     }
-
+    @Mapping(target = "username", source = "actualUsername")
     private UserResponseDto mapToResponse(User user) {
         UserResponseDto dto = new UserResponseDto();
 
