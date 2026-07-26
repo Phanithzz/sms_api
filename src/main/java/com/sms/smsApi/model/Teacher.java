@@ -1,10 +1,13 @@
 package com.sms.smsApi.model;
 
 
+import com.sms.smsApi.model.enums.TeacherStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -21,7 +24,7 @@ public class Teacher {
     @Column(name = "teacher_id", length = 100)
     private String teacherId;
 
-    @Column(name = "user_id", unique = true, nullable = false)
+    @Column(name = "user_id")
     private Integer userId;
 
     @Column(name = "full_name_kh")
@@ -46,7 +49,7 @@ public class Teacher {
     private String sex;
 
     @Column(name = "date_of_birth")
-    private LocalDate dateOfBirth;
+    private Date dateOfBirth;
 
     @Column(name = "phone_number")
     private String phoneNumber;
@@ -70,7 +73,7 @@ public class Teacher {
     private LocalDate hiredDate;
 
     @Column(name = "employment_status")
-    private String employmentStatus;
+    private TeacherStatus employmentStatus;
 
     @Column(name = "salary", precision = 10, scale = 2)
     private BigDecimal salary;
@@ -79,10 +82,10 @@ public class Teacher {
     private String profilePhoto;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = new Timestamp(System.currentTimeMillis()).toLocalDateTime();
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt ;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

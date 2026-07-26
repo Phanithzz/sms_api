@@ -16,4 +16,6 @@ public interface TeacherRepository extends JpaRepository<Teacher, String> {
     LIMIT 1
     """, nativeQuery = true)
     String findLatestTeacherIdByPrefix(@Param("prefix") String prefix);
+
+    boolean existsByEmail(String email);
 }
