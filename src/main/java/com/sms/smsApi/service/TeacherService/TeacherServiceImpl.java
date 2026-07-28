@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ public class TeacherServiceImpl implements TeacherService{
                     LOWER(full_name_en) LIKE :keyword
                     OR LOWER(full_name_kh) LIKE :keyword
                     OR phone_number LIKE :keyword
+                    OR teacher_id LIKE :keyword
                 )
             """);
 
@@ -62,6 +64,7 @@ public class TeacherServiceImpl implements TeacherService{
                     LOWER(full_name_en) LIKE :keyword
                     OR LOWER(full_name_kh) LIKE :keyword
                     OR phone_number LIKE :keyword
+                    OR teacher_id LIKE :keyword
                 )
             """);
 
@@ -103,14 +106,43 @@ public class TeacherServiceImpl implements TeacherService{
         params.addValue("offset", req.getPage() * req.getSize());
 
         List<Teacher> teachers = jdbcTemplate.query(sql.toString(), params, (rs, rowNum) -> {
-            Teacher s = new Teacher();
-            s.setTeacherId(rs.getString("teacher_id"));
-            s.setFullNameEn(rs.getString("full_name_en"));
-            s.setFullNameKh(rs.getString("full_name_kh"));
-            s.setPhoneNumber(rs.getString("phone_number"));
-            s.setDepartmentId(rs.getInt("department_id"));
-            s.setSex(rs.getString("sex"));
-            return s;
+            Teacher t = new Teacher();
+            String status = rs.getString("employment_status");
+            t.setEmploymentStatus(status == null ? null : TeacherStatus.fromDatabase(status));
+            t.setTeacherId(rs.getString("teacher_id"));
+            t.setUserId(rs.getInt("user_id"));
+            t.setFullNameKh(rs.getString("full_name_kh"));
+            t.setFullNameEn(rs.getString("full_name_en"));
+            t.setFirstNameEn(rs.getString("first_name_en"));
+            t.setLastNameEn(rs.getString("last_name_en"));
+            t.setFirstNameKh(rs.getString("first_name_kh"));
+            t.setLastNameKh(rs.getString("last_name_kh"));
+            t.setSex(rs.getString("sex"));
+            t.setDateOfBirth(rs.getDate("date_of_birth") != null
+                    ? Date.valueOf(rs.getDate("date_of_birth").toLocalDate())
+                    : null);
+            t.setPhoneNumber(rs.getString("phone_number"));
+            t.setEmail(rs.getString("email"));
+            t.setNationalId(rs.getString("national_id"));
+            t.setDepartmentId(rs.getInt("department_id"));
+            t.setSpecialization(rs.getString("specialization"));
+            t.setQualification(rs.getString("qualification"));
+            t.setHiredDate(rs.getDate("hired_date") != null
+                    ? rs.getDate("hired_date").toLocalDate()
+                    : null);
+            t.setSalary(rs.getBigDecimal("salary"));
+            t.setProfilePhoto(rs.getString("profile_photo"));
+
+            t.setCreatedAt(rs.getTimestamp("created_at") != null
+                    ? rs.getTimestamp("created_at").toLocalDateTime()
+                    : null);
+            t.setUpdatedAt(rs.getTimestamp("updated_at") != null
+                    ? rs.getTimestamp("updated_at").toLocalDateTime()
+                    : null);
+            t.setDeletedAt(rs.getTimestamp("deleted_at") != null
+                    ? rs.getTimestamp("deleted_at").toLocalDateTime()
+                    : null);
+            return t;
         });
 
         LOGGER.info(" SQL :{}/ count_SQL: {}",sql,countSql);
@@ -235,13 +267,28 @@ public class TeacherServiceImpl implements TeacherService{
     private TeacherResponse toResponse(Teacher teacher) {
         return new TeacherResponse(
                 teacher.getTeacherId(),
+                teacher.getUserId(),
+                teacher.getFullNameKh(),
                 teacher.getFirstNameEn(),
                 teacher.getLastNameEn(),
-                teacher.getEmail(),
+                teacher.getFirstNameKh(),
+                teacher.getLastNameKh(),
+                teacher.getFullNameEn(),
+                teacher.getSex(),
+                teacher.getDateOfBirth(),
                 teacher.getPhoneNumber(),
+                teacher.getEmail(),
+                teacher.getNationalId(),
+                teacher.getDepartmentId(),
+                teacher.getSpecialization(),
+                teacher.getQualification(),
                 teacher.getHiredDate(),
                 teacher.getEmploymentStatus(),
-                teacher.getCreatedAt()
+                teacher.getSalary(),
+                teacher.getProfilePhoto(),
+                teacher.getCreatedAt(),
+                teacher.getUpdatedAt(),
+                teacher.getDeletedAt()
         );
     }
 }
