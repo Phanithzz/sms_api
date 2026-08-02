@@ -13,7 +13,7 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeacherResponse {
+public class TeacherSearchResponse {
     private String teacherId;
     private Integer userId;
 
@@ -45,4 +45,8 @@ public class TeacherResponse {
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
+    private String departmentCode;
+    private String departmentNameEn;
+    private String departmentNameKh;
 }
+

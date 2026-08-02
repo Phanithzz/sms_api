@@ -4,6 +4,7 @@ package com.sms.smsApi.service.TeacherService;
 import com.sms.smsApi.dto.requestDto.TeacherRequest;
 import com.sms.smsApi.dto.requestDto.TeacherRequestFilter;
 import com.sms.smsApi.dto.requestDto.TeacherResponse;
+import com.sms.smsApi.dto.requestDto.TeacherSearchResponse;
 import com.sms.smsApi.exception.DuplicateResourceException;
 import com.sms.smsApi.exception.ResourceNotFoundException;
 import com.sms.smsApi.model.Teacher;
@@ -37,8 +38,9 @@ public class TeacherServiceImpl implements TeacherService{
     public Map<String, Object> getTeachers(TeacherRequestFilter req) {
 
         StringBuilder sql = new StringBuilder("""
-            SELECT * FROM teachers
-            WHERE deleted_at IS NULL
+            SELECT  t.*, d.department_code, d.department_name_en,d.department_name_kh FROM teachers t
+            LEFT JOIN departments d ON t.department_id = d.department_id
+            WHERE t.deleted_at IS NULL
         """);
 
         StringBuilder countSql = new StringBuilder("""
@@ -52,10 +54,10 @@ public class TeacherServiceImpl implements TeacherService{
         if (req.getKeyword() != null && !req.getKeyword().isBlank()) {
             sql.append("""
                 AND (
-                    LOWER(full_name_en) LIKE :keyword
-                    OR LOWER(full_name_kh) LIKE :keyword
-                    OR phone_number LIKE :keyword
-                    OR teacher_id LIKE :keyword
+                    LOWER(t.full_name_en) LIKE :keyword
+                    OR LOWER(t.full_name_kh) LIKE :keyword
+                    OR t.phone_number LIKE :keyword
+                    OR t.teacher_id LIKE :keyword
                 )
             """);
 
@@ -72,17 +74,17 @@ public class TeacherServiceImpl implements TeacherService{
         }
 
         if (req.getDepartmentId() != null && req.getDepartmentId() > 0) {
-            sql.append(" AND department_id = :departmentId");
+            sql.append(" AND t.department_id = :departmentId");
             countSql.append(" AND department_id = :departmentId");
             params.addValue("departmentId", req.getDepartmentId());
         }
         if (req.getSex() != null && !req.getSex().isEmpty()) {
-            sql.append(" AND sex = :from");
+            sql.append(" AND t.sex = :from");
             countSql.append(" AND sex = :from");
             params.addValue("from", req.getSex());
         }
         if (req.getHiredDate() != null) {
-            sql.append(" AND hired_date >= :from");
+            sql.append(" AND t.hired_date >= :from");
             countSql.append(" AND hired_date >= :from");
             params.addValue("from", req.getHiredDate());
         }
@@ -105,8 +107,8 @@ public class TeacherServiceImpl implements TeacherService{
         params.addValue("limit", req.getSize());
         params.addValue("offset", req.getPage() * req.getSize());
 
-        List<Teacher> teachers = jdbcTemplate.query(sql.toString(), params, (rs, rowNum) -> {
-            Teacher t = new Teacher();
+        List<TeacherSearchResponse> teachers = jdbcTemplate.query(sql.toString(), params, (rs, rowNum) -> {
+            TeacherSearchResponse t = new TeacherSearchResponse();
             String status = rs.getString("employment_status");
             t.setEmploymentStatus(status == null ? null : TeacherStatus.fromDatabase(status));
             t.setTeacherId(rs.getString("teacher_id"));
@@ -142,6 +144,9 @@ public class TeacherServiceImpl implements TeacherService{
             t.setDeletedAt(rs.getTimestamp("deleted_at") != null
                     ? rs.getTimestamp("deleted_at").toLocalDateTime()
                     : null);
+            t.setDepartmentCode(rs.getString("department_code"));
+            t.setDepartmentNameEn(rs.getString("department_name_en"));
+            t.setDepartmentNameKh(rs.getString("department_name_kh"));
             return t;
         });
 
@@ -268,12 +273,13 @@ public class TeacherServiceImpl implements TeacherService{
         return new TeacherResponse(
                 teacher.getTeacherId(),
                 teacher.getUserId(),
+
                 teacher.getFullNameKh(),
+                teacher.getFullNameEn(),
                 teacher.getFirstNameEn(),
                 teacher.getLastNameEn(),
                 teacher.getFirstNameKh(),
                 teacher.getLastNameKh(),
-                teacher.getFullNameEn(),
                 teacher.getSex(),
                 teacher.getDateOfBirth(),
                 teacher.getPhoneNumber(),

@@ -47,6 +47,7 @@ public class StudentServiceImpl implements StudentService{
                     LOWER(full_name_en) LIKE :keyword
                     OR LOWER(full_name_kh) LIKE :keyword
                     OR phone_number LIKE :keyword
+                    OR student_id LIKE :keyword
                 )
             """);
 
@@ -55,6 +56,7 @@ public class StudentServiceImpl implements StudentService{
                     LOWER(full_name_en) LIKE :keyword
                     OR LOWER(full_name_kh) LIKE :keyword
                     OR phone_number LIKE :keyword
+                    OR student_id LIKE :keyword
                 )
             """);
 
