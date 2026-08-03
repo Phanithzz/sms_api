@@ -1,6 +1,8 @@
 package com.sms.smsApi.service.StudentService;
 
+import com.sms.smsApi.dto.requestDto.StudentRequest;
 import com.sms.smsApi.dto.requestDto.StudentRequestFilter;
+import com.sms.smsApi.dto.requestDto.StudentResponse;
 import com.sms.smsApi.exception.ResourceNotFoundException;
 import com.sms.smsApi.model.Student;
 import com.sms.smsApi.repository.StudentRepository;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class StudentServiceImpl implements StudentService{
@@ -138,25 +141,25 @@ public class StudentServiceImpl implements StudentService{
 
 
     @Override
-    public Student updateStudent(Student student) {
+    public Student updateStudent(String studentId,StudentRequest student) {
 
-        Student existing = studentRepository.findStudentById(student.getStudentId());
+        Student existing = studentRepository.findStudentById(studentId);
 
         if (existing == null) {
             throw new RuntimeException(
-                    "Student not found with id: " + student.getStudentId());
+                    "Student not found with id: " + studentId);
         }
 
-        existing.setStudentFirstNameEn(student.getStudentFirstNameEn());
-        existing.setStudentLastNameEn(student.getStudentLastNameEn());
-        existing.setStudentFirstNameKh(student.getStudentFirstNameKh());
-        existing.setStudentLastNameKh(student.getStudentLastNameKh());
+        existing.setStudentFirstNameEn(student.getFirstNameEn());
+        existing.setStudentLastNameEn(student.getLastNameEn());
+        existing.setStudentFirstNameKh(student.getFirstNameKh());
+        existing.setStudentLastNameKh(student.getLastNameKh());
 
         existing.setFullNameEn(student.getFullNameEn());
         existing.setFullNameKh(student.getFullNameKh());
 
         existing.setGender(student.getGender());
-        existing.setDateOfBirth(student.getDateOfBirth());
+        existing.setDateOfBirth(student.getDob());
         existing.setPlaceOfBirth(student.getPlaceOfBirth());
         existing.setNationalId(student.getNationalId());
 
@@ -170,7 +173,7 @@ public class StudentServiceImpl implements StudentService{
         existing.setEnrolledDate(student.getEnrolledDate());
         existing.setEndDate(student.getEndDate());
 
-        existing.setStatus(student.getStatus());
+        existing.setStatus(String.valueOf(student.getStatus()));
         existing.setGpa(student.getGpa());
 
         existing.setProfilePhoto(student.getProfilePhoto());
@@ -179,5 +182,57 @@ public class StudentServiceImpl implements StudentService{
         existing.setEmergencyContactPhone(student.getEmergencyContactPhone());
 
         return studentRepository.save(existing);
+    }
+
+
+
+    public List<StudentResponse> findAll() {
+        return studentRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    public StudentResponse findById(String id) {
+        return toResponse(getOrThrow(id));
+    }
+
+
+    public void delete(String id) {
+        getOrThrow(id);
+        studentRepository.deleteById(id);
+    }
+
+    private Student getOrThrow(String id) {
+        return studentRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Student", id));
+    }
+    private StudentResponse toResponse(Student s) {
+        return new StudentResponse(
+                s.getStudentId(),
+                s.getUserId(),
+                s.getStudentFirstNameEn(),
+                s.getStudentLastNameEn(),
+                s.getStudentFirstNameKh(),
+                s.getStudentLastNameKh(),
+                s.getFullNameEn(),
+                s.getFullNameKh(),
+                //s.getEmail(),
+                s.getGender(),
+                s.getDateOfBirth(),
+                s.getPlaceOfBirth(),
+                s.getNationalId(),
+                s.getPhoneNumber(),
+                s.getCurrentAddress(),
+                s.getProvince(),
+                s.getGradeLevel(),
+                s.getHomeroomClassId(),
+                s.getEnrolledDate(),
+                s.getEndDate(),
+                s.getStatus(),
+                s.getGpa(),
+                s.getProfilePhoto(),
+                s.getEmergencyContactName(),
+                s.getEmergencyContactPhone(),
+                s.getCreatedAt(),
+                s.getUpdatedAt(),
+                s.getDeletedAt()
+        );
     }
 }
