@@ -40,7 +40,7 @@ public class TeacherRequest {
     private String phoneNumber;
     private LocalDate hiredDate;
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date dob;
+    private Date dateOfBirth;
     private BigDecimal salary;
 }
 

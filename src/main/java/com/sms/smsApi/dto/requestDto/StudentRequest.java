@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -38,7 +39,7 @@ public class StudentRequest {
 
     @Past(message = "Date of birth must be in the past")
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate dob;
+    private LocalDate dateOfBirth;
 
     private String placeOfBirth;
 
@@ -70,7 +71,7 @@ public class StudentRequest {
     @DecimalMax(value = "4.00", message = "GPA cannot exceed 4.00")
     private BigDecimal gpa;
 
-    private String profilePhoto;
+    private MultipartFile profilePhoto;
 
     private String emergencyContactName;
 

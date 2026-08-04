@@ -10,9 +10,11 @@ import com.sms.smsApi.service.StudentService.StudentService;
 import jakarta.validation.Valid;
 import org.hibernate.query.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -35,8 +37,8 @@ public class StudentController {
 //    public ResponseEntity<?> create(@RequestBody StudentCreateDto dto) {
 //
 //    }
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable String id, @RequestBody StudentRequest student) {
+@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> update(@PathVariable String id, @ModelAttribute  StudentRequest student) throws IOException {
         Student updatedStudent = studentService.updateStudent(id,student);
         return ResponseEntity.ok(updatedStudent);
     }

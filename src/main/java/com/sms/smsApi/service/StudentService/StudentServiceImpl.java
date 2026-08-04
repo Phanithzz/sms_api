@@ -14,10 +14,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -110,20 +118,101 @@ public class StudentServiceImpl implements StudentService{
 
         sql.append(" ORDER BY ").append(sortBy).append(" ").append(direction);
 
-        // 📄 PAGINATION
         sql.append(" LIMIT :limit OFFSET :offset");
         params.addValue("limit", req.getSize());
         params.addValue("offset", req.getPage() * req.getSize());
 
-        // 🚀 EXECUTE
+
         List<Student> students = jdbcTemplate.query(sql.toString(), params, (rs, rowNum) -> {
+
             Student s = new Student();
+
             s.setStudentId(rs.getString("student_id"));
+
+            s.setStudentFirstNameEn(rs.getString("first_name_en"));
+            s.setStudentLastNameEn(rs.getString("last_name_en"));
+
+            s.setStudentFirstNameKh(rs.getString("first_name_kh"));
+            s.setStudentLastNameKh(rs.getString("last_name_kh"));
+
             s.setFullNameEn(rs.getString("full_name_en"));
             s.setFullNameKh(rs.getString("full_name_kh"));
+
+       //     s.setEmail(rs.getString("email"));
+
+            s.setGender(rs.getString("gender"));
+
+            if (rs.getDate("date_of_birth") != null) {
+                s.setDateOfBirth(
+                        rs.getDate("date_of_birth").toLocalDate()
+                );
+            }
+
+            s.setPlaceOfBirth(rs.getString("place_of_birth"));
+
+            s.setNationalId(rs.getString("national_id"));
+
             s.setPhoneNumber(rs.getString("phone_number"));
+
+            s.setCurrentAddress(rs.getString("current_address"));
+
             s.setProvince(rs.getString("province"));
+
             s.setGradeLevel(rs.getInt("grade_level"));
+
+            s.setHomeroomClassId(
+                    rs.getInt("homeroom_class_id")
+            );
+
+            if (rs.getDate("enrolled_date") != null) {
+                s.setEnrolledDate(
+                        rs.getDate("enrolled_date").toLocalDate()
+                );
+            }
+
+            if (rs.getDate("end_date") != null) {
+                s.setEndDate(
+                        rs.getDate("end_date").toLocalDate()
+                );
+            }
+
+
+            s.setStatus(
+                    rs.getString("status")
+            );
+
+
+            if (rs.getBigDecimal("gpa") != null) {
+                s.setGpa(
+                        rs.getBigDecimal("gpa")
+                );
+            }
+
+
+            // Image path
+            s.setProfilePhoto(
+                    rs.getString("profile_photo")
+            );
+
+
+            s.setEmergencyContactName(
+                    rs.getString("emergency_contact_name")
+            );
+
+            s.setEmergencyContactPhone(
+                    rs.getString("emergency_contact_phone")
+            );
+
+
+            s.setCreatedAt(rs.getTimestamp("created_at") != null
+                    ? rs.getTimestamp("created_at").toLocalDateTime()
+                    : null);
+            s.setUpdatedAt(rs.getTimestamp("updated_at") != null
+                    ? rs.getTimestamp("updated_at").toLocalDateTime()
+                    : null);
+            s.setDeletedAt(rs.getTimestamp("deleted_at") != null
+                    ? rs.getTimestamp("deleted_at").toLocalDateTime()
+                    : null);
             return s;
         });
 
@@ -141,7 +230,7 @@ public class StudentServiceImpl implements StudentService{
 
 
     @Override
-    public Student updateStudent(String studentId,StudentRequest student) {
+    public Student updateStudent(String studentId,StudentRequest student) throws IOException {
 
         Student existing = studentRepository.findStudentById(studentId);
 
@@ -149,6 +238,7 @@ public class StudentServiceImpl implements StudentService{
             throw new RuntimeException(
                     "Student not found with id: " + studentId);
         }
+        String imagePath = saveImage(student.getProfilePhoto());
 
         existing.setStudentFirstNameEn(student.getFirstNameEn());
         existing.setStudentLastNameEn(student.getLastNameEn());
@@ -159,7 +249,7 @@ public class StudentServiceImpl implements StudentService{
         existing.setFullNameKh(student.getFullNameKh());
 
         existing.setGender(student.getGender());
-        existing.setDateOfBirth(student.getDob());
+        existing.setDateOfBirth(student.getDateOfBirth());
         existing.setPlaceOfBirth(student.getPlaceOfBirth());
         existing.setNationalId(student.getNationalId());
 
@@ -176,7 +266,7 @@ public class StudentServiceImpl implements StudentService{
         existing.setStatus(String.valueOf(student.getStatus()));
         existing.setGpa(student.getGpa());
 
-        existing.setProfilePhoto(student.getProfilePhoto());
+        existing.setProfilePhoto(imagePath);
 
         existing.setEmergencyContactName(student.getEmergencyContactName());
         existing.setEmergencyContactPhone(student.getEmergencyContactPhone());
@@ -234,5 +324,24 @@ public class StudentServiceImpl implements StudentService{
                 s.getUpdatedAt(),
                 s.getDeletedAt()
         );
+    }
+
+
+    private String saveImage(MultipartFile file) throws IOException {
+
+        String uploadDir = "uploads/students/";
+
+        File directory = new File(uploadDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+
+        Path path = Paths.get(uploadDir, fileName);
+
+        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+        return "/uploads/students/" + fileName;
     }
 }

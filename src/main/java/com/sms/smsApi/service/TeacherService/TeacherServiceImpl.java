@@ -195,7 +195,7 @@ public class TeacherServiceImpl implements TeacherService{
         teacher.setSpecialization(request.getSpecialization());
         teacher.setPhoneNumber(request.getPhoneNumber());
         teacher.setHiredDate(request.getHiredDate());
-        teacher.setDateOfBirth(request.getDob());
+        teacher.setDateOfBirth(request.getDateOfBirth());
         teacher.setSalary(request.getSalary());
 
         return toResponse(repository.save(teacher));
@@ -228,7 +228,7 @@ public class TeacherServiceImpl implements TeacherService{
         teacher.setSpecialization(request.getSpecialization());
         teacher.setPhoneNumber(request.getPhoneNumber());
         teacher.setHiredDate(request.getHiredDate());
-        teacher.setDateOfBirth(request.getDob());
+        teacher.setDateOfBirth(request.getDateOfBirth());
         teacher.setSalary(request.getSalary());
         Teacher updated = repository.save(teacher);
 

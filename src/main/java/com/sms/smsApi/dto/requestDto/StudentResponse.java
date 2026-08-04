@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -35,7 +36,7 @@ public class StudentResponse {
     private String gender;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate dob;
+    private LocalDate dateOfBirth;
 
     private String placeOfBirth;
 
@@ -71,6 +72,11 @@ public class StudentResponse {
     private Timestamp updatedAt;
     private Timestamp deletedAt;
 
-    public StudentResponse(String studentId, Integer userId, String studentFirstNameEn, String studentLastNameEn, String studentFirstNameKh, String studentLastNameKh, String fullNameEn, String fullNameKh, String gender, LocalDate dateOfBirth, String placeOfBirth, String nationalId, String phoneNumber, String currentAddress, String province, Integer gradeLevel, Integer homeroomClassId, LocalDate enrolledDate, LocalDate endDate, String status, BigDecimal gpa, String profilePhoto, String emergencyContactName, String emergencyContactPhone, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
+    public StudentResponse(String studentId, Integer userId, String studentFirstNameEn,
+                           String studentLastNameEn, String studentFirstNameKh, String studentLastNameKh,
+                           String fullNameEn, String fullNameKh, String gender, LocalDate dateOfBirth,
+                           String placeOfBirth, String nationalId, String phoneNumber, String currentAddress,
+                           String province, Integer gradeLevel, Integer homeroomClassId, LocalDate enrolledDate,
+                           LocalDate endDate, String status, BigDecimal gpa, String profilePhoto, String emergencyContactName, String emergencyContactPhone, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
     }
 }
