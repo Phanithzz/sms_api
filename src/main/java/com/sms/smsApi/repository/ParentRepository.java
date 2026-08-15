@@ -1,6 +1,7 @@
 package com.sms.smsApi.repository;
 
 import com.sms.smsApi.model.Parent;
+import com.sms.smsApi.model.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,5 +17,13 @@ public interface ParentRepository extends JpaRepository<Parent, String> {
     LIMIT 1
     """, nativeQuery = true)
     String findLatestParentId(@Param("prefix") String prefix);
+
+    @Query("""
+    SELECT p
+    FROM Parent p
+    WHERE p.parentId = :parentId
+    """)
+    Parent findParentById(@Param("parentId") String parentId);
+
 }
 

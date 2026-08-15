@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/enrollments")
@@ -25,10 +26,21 @@ public class EnrollmentController {
 
     // POST /api/v1/enrollments
     @PostMapping
-    public ResponseEntity<EnrollmentResponse> enroll(@Valid @RequestBody EnrollmentRequest request) {
-        EnrollmentResponse created = enrollmentService.enroll(request);
-        return ResponseEntity.ok(
-                enrollmentService.enroll(request));
+    public ResponseEntity<?> enroll(
+            @Valid @RequestBody EnrollmentRequest request) {
+
+        try {
+            EnrollmentResponse created = enrollmentService.enroll(request);
+            return ResponseEntity.ok(created);
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", e.getMessage()
+                    ));
+        }
     }
 
     // GET /api/v1/enrollments/{id}
