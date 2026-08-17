@@ -25,5 +25,10 @@ public interface ParentRepository extends JpaRepository<Parent, String> {
     """)
     Parent findParentById(@Param("parentId") String parentId);
 
+    @Query("""
+        SELECT COUNT(p)
+        FROM Parent p
+    """)
+    long countParent();
 }
 

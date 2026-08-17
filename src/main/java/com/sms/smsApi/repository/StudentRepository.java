@@ -1,10 +1,13 @@
 package com.sms.smsApi.repository;
 
+import com.sms.smsApi.dto.requestDto.GenderCount;
 import com.sms.smsApi.model.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface StudentRepository extends JpaRepository<Student, String> {
@@ -30,6 +33,28 @@ public interface StudentRepository extends JpaRepository<Student, String> {
     WHERE student_id = :studentId
     """, nativeQuery = true)
     long countByStudentId(@Param("studentId") String studentId);
+
+    @Query("""
+        SELECT COUNT(s)
+        FROM Student s
+        WHERE UPPER(s.status) = 'ACTIVE'
+    """)
+    long countActiveStudents();
+
+    @Query("""
+        SELECT COUNT(s)
+        FROM Student s
+        WHERE UPPER(s.status)  = 'INACTIVE'
+    """)
+    long countInactiveStudents();
+
+
+    @Query("""
+    select s.gender, count(s) as total
+    from Student s
+    group by s.gender
+    """)
+    List<GenderCount> countStudentGender();
 
 
 }

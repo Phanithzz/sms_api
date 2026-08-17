@@ -18,4 +18,11 @@ public interface TeacherRepository extends JpaRepository<Teacher, String> {
     String findLatestTeacherIdByPrefix(@Param("prefix") String prefix);
 
     boolean existsByEmail(String email);
+
+    @Query("""
+    SELECT COUNT(t)
+    FROM Teacher t
+    WHERE t.deletedAt IS NULL
+""")
+    long countActiveTeachers();
 }
