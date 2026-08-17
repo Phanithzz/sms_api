@@ -3,6 +3,8 @@ package com.sms.smsApi.controller.auth;
 import com.sms.smsApi.dto.LoginDto;
 import com.sms.smsApi.dto.RegistrationDto;
 import com.sms.smsApi.dto.VerifyUserDto;
+import com.sms.smsApi.dto.requestDto.ForgotPasswordRequest;
+import com.sms.smsApi.dto.requestDto.ResetPasswordRequest;
 import com.sms.smsApi.exception.AccountDisabledException;
 import com.sms.smsApi.exception.AccountNotVerifiedException;
 import com.sms.smsApi.exception.InvalidCredentialsException;
@@ -13,6 +15,7 @@ import com.sms.smsApi.reponse.LoginResponse;
 import com.sms.smsApi.service.AuthService.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -165,6 +168,36 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+
+        authService.forgotPassword(request.getEmail());
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "If the email exists, a password reset link has been sent."
+                )
+        );
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        authService.resetPassword(
+                request.getToken(),
+                request.getNewPassword()
+        );
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Password has been reset successfully."
+                )
+        );
+    }
     // Helper method to create consistent error responses
     private Map<String, String> createErrorResponse(String message) {
         Map<String, String> error = new HashMap<>();

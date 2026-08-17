@@ -128,9 +128,26 @@ public class UserServiceImpl implements UserService {
                     }
                 }
                 else if (roleId.equals(UserRole.PARENT.getCode())) {
-                    boolean insertParent = insertParentViaUser(input,savedUser.getUserId(), user.getUserId());
-                    if(!insertParent){
-                        LOGGER.error("Error insert parent for parent ID: {}", savedUser.getUserId());
+
+                    String parentId = insertParentViaUser(
+                            input,
+                            savedUser.getUserId(),
+                            currentUser.getUserId()
+                    );
+
+                    if (parentId == null) {
+                        throw new RuntimeException("Failed to create parent");
+                    }
+
+                    boolean studentParentCreated = insertStudentParent(
+                            input.getStudentId(),
+                            parentId,
+                            "FATHER",
+                            true
+                    );
+
+                    if (!studentParentCreated) {
+                        throw new RuntimeException("Failed to link student with parent");
                     }
                 }
                 else {
@@ -387,21 +404,51 @@ public class UserServiceImpl implements UserService {
         return success > 0;
     }
 
-
-    // Note: insert only father's name first
-    private boolean insertParentViaUser(RegistrationDto input, Long newUserId, Long createdUserId) {
+    private String insertParentViaUser(
+            RegistrationDto input,
+            Long newUserId,
+            Long createdUserId
+    ) {
         String sql = """
-                INSERT INTO parents (parent_id, user_id, father_name_en ,created_at)
-                VALUES (?,?,?,?)
-                """;
-        String id = generateParentID();
+            INSERT INTO parents
+                (parent_id, user_id, father_name_en, created_at)
+            VALUES (?, ?, ?, ?)
+            """;
 
-        Object[] params = {id, newUserId, input.getFirstName() + input.getLastName(),
-                 new Timestamp(System.currentTimeMillis())
+        String parentId = generateParentID();
+
+        Object[] params = {
+                parentId,
+                newUserId,
+                input.getFirstName() + " " + input.getLastName(),
+                new Timestamp(System.currentTimeMillis())
         };
 
         int success = jdbcTemplate.update(sql, params);
 
+        return success > 0 ? parentId : null;
+    }
+    private boolean insertStudentParent(
+            String studentId,
+            String parentId,
+            String relationship,
+            boolean isPrimary
+    ) {
+        String sql = """
+            INSERT INTO student_parents
+                (student_id, parent_id, relationship_type, is_primary_contact, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+
+        Object[] params = {
+                studentId,
+                parentId,
+                relationship,
+                isPrimary,
+                new Timestamp(System.currentTimeMillis())
+        };
+
+        int success = jdbcTemplate.update(sql, params);
 
         return success > 0;
     }

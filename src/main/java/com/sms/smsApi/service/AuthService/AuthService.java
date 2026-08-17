@@ -26,5 +26,10 @@ public interface AuthService {
 
     void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException;
     boolean logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication);
+    void forgotPassword(String email);
+    void resetPassword(
+            String rawToken,
+            String newPassword
+    );
 }
 

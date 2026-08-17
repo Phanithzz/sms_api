@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,12 +35,20 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HexFormat;
+import java.util.List;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -59,6 +68,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final TokenRepository tokenRepository;
     private final JwtService jwtService;
+    private final JdbcTemplate jdbcTemplate;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -68,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
                            EmailService emailService,
                            UserService userService,
                            TokenRepository tokenRepository,
-                           JwtService jwtService) {
+                           JwtService jwtService, JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -76,6 +86,7 @@ public class AuthServiceImpl implements AuthService {
         this.userService = userService;
         this.tokenRepository = tokenRepository;
         this.jwtService = jwtService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -269,12 +280,184 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
+
+    @Transactional
+    public void forgotPassword(String email) {
+
+        String sql = """
+            SELECT user_id
+            FROM users
+            WHERE email = ?
+              AND deleted_at IS NULL
+            """;
+
+        List<Long> users = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> rs.getLong("user_id"),
+                email
+        );
+
+        // Don't reveal whether the email exists
+        if (users.isEmpty()) {
+            return;
+        }
+
+        Long userId = users.get(0);
+
+        // Generate secure random token
+        String rawToken = generateResetToken();
+
+        // Hash token before storing
+        String tokenHash = hashToken(rawToken);
+
+        // Token expires in 15 minutes
+        Timestamp expiresAt = Timestamp.from(
+                Instant.now().plus(15, ChronoUnit.MINUTES)
+        );
+
+        // Optional: invalidate previous tokens
+        String invalidateSql = """
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+              AND used_at IS NULL
+            """;
+
+        jdbcTemplate.update(invalidateSql, userId);
+
+        // Save new token
+        String insertSql = """
+            INSERT INTO password_reset_tokens
+                (user_id, token_hash, expires_at, created_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            """;
+
+        jdbcTemplate.update(
+                insertSql,
+                userId,
+                tokenHash,
+                expiresAt
+        );
+
+        String resetLink =
+                "http://localhost:5173/reset-password?token=" + rawToken;
+
+        emailService.sendPasswordResetEmail(
+                email,
+                resetLink
+        );
+
+        LOGGER.info(
+                "Password reset email sent for user {}",
+                userId
+        );
+    }
+    private record PasswordResetTokenRow(
+            Long id,
+            Long userId
+    ) {
+    }
+
+    @Transactional
+    public void resetPassword(
+            String rawToken,
+            String newPassword
+    ) {
+
+        String tokenHash = hashToken(rawToken);
+
+        String sql = """
+            SELECT id, user_id
+            FROM password_reset_tokens
+            WHERE token_hash = ?
+              AND used_at IS NULL
+              AND expires_at > CURRENT_TIMESTAMP
+            """;
+
+        List<PasswordResetTokenRow> tokens = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new PasswordResetTokenRow(
+                        rs.getLong("id"),
+                        rs.getLong("user_id")
+                ),
+                tokenHash
+        );
+
+        if (tokens.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Invalid or expired password reset token"
+            );
+        }
+
+        PasswordResetTokenRow token = tokens.get(0);
+
+        // Update password
+        String updatePasswordSql = """
+            UPDATE users
+            SET password = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+            """;
+
+        jdbcTemplate.update(
+                updatePasswordSql,
+                passwordEncoder.encode(newPassword),
+                token.userId()
+        );
+
+        // Invalidate token
+        String invalidateSql = """
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """;
+
+        jdbcTemplate.update(
+                invalidateSql,
+                token.id()
+        );
+
+        LOGGER.info(
+                "Password successfully reset for user {}",
+                token.userId()
+        );
+    }
     /*
     /Helper Methods
      */
     /**
      * Generates and persists a new hashed verification code, then emails it to the user.
      */
+    private String generateResetToken() {
+
+        byte[] bytes = new byte[32];
+
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(bytes);
+
+        return HexFormat.of().formatHex(bytes);
+    }
+
+    private String hashToken(String token) {
+
+        try {
+            MessageDigest digest =
+                    MessageDigest.getInstance("SHA-256");
+
+            byte[] hash = digest.digest(
+                    token.getBytes(StandardCharsets.UTF_8)
+            );
+
+            return HexFormat.of().formatHex(hash);
+
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(
+                    "SHA-256 algorithm not available",
+                    e
+            );
+        }
+    }
+
     private void sendNewVerificationCode(User user) {
         String plainCode = generateVerificationCode();
 

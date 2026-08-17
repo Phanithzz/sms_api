@@ -291,8 +291,20 @@ public class StudentServiceImpl implements StudentService{
     }
 
     private Student getOrThrow(String id) {
-        return studentRepository.findById(id).orElseThrow(() -> ResourceNotFoundException.of("Student", id));
+
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() ->
+                        ResourceNotFoundException.of("Student", id)
+                );
+
+        System.out.println("Student ID = " + student.getStudentId());
+        System.out.println("User ID = " + student.getUserId());
+        System.out.println("First Name = " + student.getStudentFirstNameEn());
+        System.out.println("Last Name = " + student.getStudentLastNameEn());
+
+        return student;
     }
+
     private StudentResponse toResponse(Student s) {
         return new StudentResponse(
                 s.getStudentId(),

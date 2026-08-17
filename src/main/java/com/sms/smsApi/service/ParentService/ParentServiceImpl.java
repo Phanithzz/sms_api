@@ -57,7 +57,7 @@ public class ParentServiceImpl implements ParentService {
             sql.append("""
                 AND (
                     LOWER(father_name_en) LIKE :keyword
-                    OR LOWER(father_name_en) LIKE :keyword
+                    OR LOWER(mother_name_en) LIKE :keyword
                     OR parent_id LIKE :keyword
                 )
             """);
@@ -65,7 +65,7 @@ public class ParentServiceImpl implements ParentService {
             countSql.append("""
                 AND (
                     LOWER(father_name_en) LIKE :keyword
-                    OR LOWER(father_name_en) LIKE :keyword
+                    OR LOWER(mother_name_en) LIKE :keyword
                     OR parent_id LIKE :keyword
                 )
             """);

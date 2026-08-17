@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class StudentResponse {
     private String studentId;
-    private String userId;
+    private Integer userId;
     private String firstNameEn;
 
     private String lastNameEn;
@@ -31,7 +31,7 @@ public class StudentResponse {
     private String fullNameEn;
 
     private String fullNameKh;
-    private String email;
+    //private String email;
 
     private String gender;
 
@@ -60,7 +60,7 @@ public class StudentResponse {
 
     private LocalDate endDate;
 
-    private StudentStatus status;
+    private String status;
     private BigDecimal gpa;
 
     private String profilePhoto;
@@ -68,15 +68,9 @@ public class StudentResponse {
     private String emergencyContactName;
 
     private String emergencyContactPhone;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
-    private Timestamp deletedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
-    public StudentResponse(String studentId, Integer userId, String studentFirstNameEn,
-                           String studentLastNameEn, String studentFirstNameKh, String studentLastNameKh,
-                           String fullNameEn, String fullNameKh, String gender, LocalDate dateOfBirth,
-                           String placeOfBirth, String nationalId, String phoneNumber, String currentAddress,
-                           String province, Integer gradeLevel, Integer homeroomClassId, LocalDate enrolledDate,
-                           LocalDate endDate, String status, BigDecimal gpa, String profilePhoto, String emergencyContactName, String emergencyContactPhone, LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-    }
+
 }
