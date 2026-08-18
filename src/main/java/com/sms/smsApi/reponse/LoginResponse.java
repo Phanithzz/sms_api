@@ -28,11 +28,13 @@ public class LoginResponse {
     }
 
     // Verification required response
-    public static LoginResponse verificationRequired(String message) {
+    public static LoginResponse verificationRequired(String message, String email) {
         LoginResponse response = new LoginResponse();
         response.success = false;
         response.message = message;
         response.verificationRequired = true;
+        response.user = new User();
+        response.user.setEmail(email);
         return response;
     }
 

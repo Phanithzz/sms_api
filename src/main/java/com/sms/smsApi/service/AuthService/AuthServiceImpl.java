@@ -117,7 +117,8 @@ public class AuthServiceImpl implements AuthService {
         if (!user.isVerified()) {
             sendNewVerificationCode(user);
             return LoginResponse.verificationRequired(
-                    "Please verify your account. Verification code sent to your email."
+                    "Please verify your account. Verification code sent to your email.",
+                    user.getEmail()
             );
         }
 
@@ -282,7 +283,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Transactional
-    public void forgotPassword(String email) {
+    public String forgotPassword(String email) {
 
         String sql = """
             SELECT user_id
@@ -299,7 +300,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Don't reveal whether the email exists
         if (users.isEmpty()) {
-            return;
+            return null;
         }
 
         Long userId = users.get(0);
@@ -351,7 +352,10 @@ public class AuthServiceImpl implements AuthService {
                 "Password reset email sent for user {}",
                 userId
         );
+
+        return rawToken;
     }
+
     private record PasswordResetTokenRow(
             Long id,
             Long userId

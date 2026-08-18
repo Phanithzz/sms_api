@@ -27,10 +27,6 @@ public class StudentRequest {
 
     private String lastNameKh;
 
-    private String fullNameEn;
-
-    private String fullNameKh;
-
     @Email(message = "Invalid email format")
     private String email;
 

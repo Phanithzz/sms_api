@@ -193,11 +193,11 @@ public class ParentServiceImpl implements ParentService {
         // User
         //existing.setUserId(request.getUserId());
 
-        // Parent name
-        existing.setFirstNameEn(request.getFirstNameEn());
-        existing.setLastNameEn(request.getLastNameEn());
-        existing.setFirstNameKh(request.getFirstNameKh());
-        existing.setLastNameKh(request.getLastNameKh());
+//        // Parent name
+//        existing.setFirstNameEn(request.getFirstNameEn());
+//        existing.setLastNameEn(request.getLastNameEn());
+//        existing.setFirstNameKh(request.getFirstNameKh());
+//        existing.setLastNameKh(request.getLastNameKh());
 
         // Father
         existing.setFatherNameKh(request.getFatherNameKh());

@@ -52,12 +52,5 @@ public class ParentRequest {
 
     private String province;
 
-    // Parent's own name
-    private String firstNameEn;
 
-    private String lastNameEn;
-
-    private String firstNameKh;
-
-    private String lastNameKh;
 }

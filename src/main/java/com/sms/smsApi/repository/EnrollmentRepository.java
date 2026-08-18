@@ -32,52 +32,43 @@ public class EnrollmentRepository {
             new GeneratedKeyHolder();
 
     public boolean exists(String studentId,
-                          Integer sectionId){
+                          Integer sectionId) {
 
         Integer count = jdbc.queryForObject(
                 """
                 SELECT COUNT(*)
                 FROM enrollments
-                WHERE student_id=?
-                AND section_id=?
-                AND status='Active'
+                WHERE student_id = ?
+                AND section_id = ?
+                AND status = 'Active'
                 """,
                 Integer.class,
                 studentId,
-                sectionId);
+                sectionId
+        );
 
         return count != null && count > 0;
     }
 
-    public Integer insert(
-            EnrollmentRequest request){
+    public Integer insert(EnrollmentRequest request) {
 
-        jdbc.update(connection -> {
+        String sql = """
+            INSERT INTO enrollments (
+                student_id,
+                section_id,
+                enrolled_date,
+                status
+            )
+            VALUES (?, ?, CURRENT_DATE, 'Active')
+            RETURNING enrollment_id
+            """;
 
-            PreparedStatement ps =
-                    connection.prepareStatement(
-                            """
-                            INSERT INTO enrollments(
-                                student_id,
-                                section_id,
-                                enrolled_date,
-                                status
-                            )
-                            VALUES(?,?,CURDATE(),'Active')
-                            """,
-                            Statement.RETURN_GENERATED_KEYS);
-
-            ps.setString(1,
-                    request.getStudentId());
-
-            ps.setInt(2,
-                    request.getSectionId());
-
-            return ps;
-
-        }, keyHolder);
-
-        return keyHolder.getKey().intValue();
+        return jdbc.queryForObject(
+                sql,
+                Integer.class,
+                request.getStudentId(),
+                request.getSectionId()
+        );
     }
 
     public Optional<EnrollmentResponse> findById(Integer id) {

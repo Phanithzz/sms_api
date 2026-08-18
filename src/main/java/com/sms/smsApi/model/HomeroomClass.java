@@ -24,7 +24,7 @@ public class HomeroomClass {
     @Column(name = "shift")
     private String shift;
     @Column(name = "homeroom_teacher_id")
-    private int homeroom_teacher_id ;
+    private String homeroom_teacher_id ;
 
     private int classroom_id;
     private int academic_year_id;

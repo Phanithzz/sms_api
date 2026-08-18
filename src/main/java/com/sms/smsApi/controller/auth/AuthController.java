@@ -172,12 +172,14 @@ public class AuthController {
     public ResponseEntity<?> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
 
-        authService.forgotPassword(request.getEmail());
+        String token = authService.forgotPassword(request.getEmail());
 
         return ResponseEntity.ok(
                 Map.of(
                         "message",
-                        "If the email exists, a password reset link has been sent."
+                        "If the email exists, a password reset link has been sent.",
+                        "resetLink",
+                        token
                 )
         );
     }

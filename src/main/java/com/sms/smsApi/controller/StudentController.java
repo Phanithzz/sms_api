@@ -37,9 +37,14 @@ public class StudentController {
 //    public ResponseEntity<?> create(@RequestBody StudentCreateDto dto) {
 //
 //    }
-@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> update(@PathVariable String id, @ModelAttribute  StudentRequest student) throws IOException {
-        Student updatedStudent = studentService.updateStudent(id,student);
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(
+            @PathVariable String id,
+            @RequestBody StudentRequest student) throws IOException {
+
+        Student updatedStudent = studentService.updateStudent(id, student);
+
         return ResponseEntity.ok(updatedStudent);
     }
 

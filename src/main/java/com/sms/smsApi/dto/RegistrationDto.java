@@ -32,7 +32,6 @@ public class RegistrationDto {
     private boolean isEnabled=true;
     private List<Integer> roleId;
 
-    @NotBlank(message = "studentId is required")
     private String studentId;
 
 }

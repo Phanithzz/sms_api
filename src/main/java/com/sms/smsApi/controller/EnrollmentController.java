@@ -7,6 +7,7 @@ import com.sms.smsApi.model.enums.EnrollmentStatus;
 import com.sms.smsApi.service.EnrollService.EnrollService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -33,12 +34,14 @@ public class EnrollmentController {
             EnrollmentResponse created = enrollmentService.enroll(request);
             return ResponseEntity.ok(created);
 
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
                             "success", false,
-                            "message", e.getMessage()
+                            "message", e.getMessage(),
+                            "cause", e.getMostSpecificCause().getMessage()
                     ));
         }
     }

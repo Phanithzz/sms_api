@@ -238,15 +238,15 @@ public class StudentServiceImpl implements StudentService{
             throw new RuntimeException(
                     "Student not found with id: " + studentId);
         }
-        String imagePath = saveImage(student.getProfilePhoto());
+        //String imagePath = saveImage(student.getProfilePhoto());
 
         existing.setStudentFirstNameEn(student.getFirstNameEn());
         existing.setStudentLastNameEn(student.getLastNameEn());
         existing.setStudentFirstNameKh(student.getFirstNameKh());
         existing.setStudentLastNameKh(student.getLastNameKh());
 
-        existing.setFullNameEn(student.getFullNameEn());
-        existing.setFullNameKh(student.getFullNameKh());
+        existing.setFullNameEn(student.getFirstNameEn() + student.getLastNameEn());
+        existing.setFullNameKh(student.getFirstNameKh() + student.getLastNameKh());
 
         existing.setGender(student.getGender());
         existing.setDateOfBirth(student.getDateOfBirth());
@@ -266,7 +266,7 @@ public class StudentServiceImpl implements StudentService{
         existing.setStatus(String.valueOf(student.getStatus()));
         existing.setGpa(student.getGpa());
 
-        existing.setProfilePhoto(imagePath);
+        //existing.setProfilePhoto(imagePath);
 
         existing.setEmergencyContactName(student.getEmergencyContactName());
         existing.setEmergencyContactPhone(student.getEmergencyContactPhone());

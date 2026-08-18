@@ -13,7 +13,7 @@ public class ClassSection {
     private String sectionCode;
     private Integer subjectId;
     private Integer homeroomClassId;
-    private Integer teacherId;
+    private String teacherId;
     private Integer classroomId;
     private Integer academicYearId;
     private Integer semester;
