@@ -6,6 +6,7 @@ import lombok.Data;
 public class EnrollmentRequest {
 
     private String studentId;
-    private Integer sectionId;
+    private Integer homeroomClassId;
+    private Integer academicYearId;
 
 }

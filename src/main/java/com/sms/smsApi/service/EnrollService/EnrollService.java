@@ -10,24 +10,38 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface EnrollService {
-    EnrollmentResponse enroll(EnrollmentRequest request);
 
-    EnrollmentResponse getById(Integer id);
+    EnrollmentResponse enroll(
+            EnrollmentRequest request);
+
+    EnrollmentResponse getById(
+            Integer id);
 
     Page<EnrollmentResponse> search(
             String studentId,
-            Integer sectionId,
+            Integer homeroomClassId,
+            Integer academicYearId,
             EnrollmentStatus status,
             Pageable pageable);
 
-    List<EnrollmentResponse> getActiveEnrollmentsForStudent(String studentId);
+    List<EnrollmentResponse> getActiveEnrollmentsForStudent(
+            String studentId);
+
+    EnrollmentResponse getByStudentAndAcademicYear(
+            String studentId,
+            Integer academicYearId);
 
     EnrollmentResponse updateStatus(
             Integer id,
             EnrollmentStatusUpdateRequest request);
 
-    void drop(Integer id);
+    EnrollmentResponse drop(
+            Integer id);
 
-    void delete(Integer id);
+    void delete(
+            Integer id);
 
+    boolean isStudentEnrolled(
+            String studentId,
+            Integer academicYearId);
 }

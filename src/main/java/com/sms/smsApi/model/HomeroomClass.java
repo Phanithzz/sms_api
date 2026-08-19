@@ -16,20 +16,20 @@ public class HomeroomClass {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "class_id", nullable = false, unique = true)
-    private int class_id;
+    private int classId;
     @Column(name = "class_code")
-    private String class_code ; // 7A, 7B
+    private String classCode ; // 7A, 7B
     @Column(name = "grade_level")
-    private int grade_level ; // 0-12
+    private int gradeLevel ; // 0-12
     @Column(name = "shift")
     private String shift;
     @Column(name = "homeroom_teacher_id")
-    private String homeroom_teacher_id ;
+    private String homeroomTeacherId ;
 
-    private int classroom_id;
-    private int academic_year_id;
-    private int max_capacity;
-    private int enrolled_count ;
-    private Timestamp created_at ;
-    private Timestamp updated_at ;
+    private int classroomId;
+    private int academicYearId;
+    private int maxCapacity;
+    private int enrolledCount ;
+    private Timestamp createdAt ;
+    private Timestamp updatedAt ;
 }

@@ -3,9 +3,10 @@ package com.sms.smsApi.service.EnrollService;
 import com.sms.smsApi.dto.EnrollmentResponse;
 import com.sms.smsApi.dto.requestDto.EnrollmentRequest;
 import com.sms.smsApi.dto.requestDto.EnrollmentStatusUpdateRequest;
+import com.sms.smsApi.model.HomeroomClass;
 import com.sms.smsApi.model.enums.EnrollmentStatus;
 import com.sms.smsApi.repository.EnrollmentRepository;
-import com.sms.smsApi.repository.SectionRepository;
+import com.sms.smsApi.repository.HomeroomClassRepository;
 import com.sms.smsApi.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,68 +22,105 @@ import java.util.List;
 public class EnrollServiceImpl implements EnrollService {
 
     private final StudentRepository studentRepository;
-    private final SectionRepository sectionRepository;
+    private final HomeroomClassRepository homeroomClassRepository;
     private final EnrollmentRepository enrollmentRepository;
+
+
+    // =========================================================
+    // ENROLL STUDENT
+    // =========================================================
 
     @Override
     public EnrollmentResponse enroll(
             EnrollmentRequest request) {
 
-        // 1 Check Student
+        // 1. Check student
 
-        if(studentRepository.countByStudentId(request.getStudentId()) == 0){
-            throw new RuntimeException("Student not found");
+        if (studentRepository.countByStudentId(
+                request.getStudentId()) == 0) {
+
+            throw new RuntimeException(
+                    "Student not found");
         }
 
-        // 2 Check Section
 
-        var section =
-                sectionRepository.findById(request.getSectionId());
+        // 2. Check homeroom class
 
-        if(section == null){
-            throw new RuntimeException("Section not found");
+        HomeroomClass homeroomClass =
+                homeroomClassRepository.findById(
+                        request.getHomeroomClassId());
+
+        if (homeroomClass == null) {
+
+            throw new RuntimeException(
+                    "Homeroom class not found");
         }
 
-        // 3 Already enrolled?
 
-        if(enrollmentRepository.exists(
+        // 3. Check academic year
+
+        if (request.getAcademicYearId() == null) {
+
+            throw new RuntimeException(
+                    "Academic year is required");
+        }
+
+
+        // 4. Check if student already has
+        //    an enrollment in this academic year
+
+        if (enrollmentRepository.exists(
                 request.getStudentId(),
-                request.getSectionId())){
+                request.getAcademicYearId())) {
 
             throw new RuntimeException(
-                    "Student already enrolled.");
+                    "Student is already enrolled in this academic year");
         }
 
-        // 4 Capacity
 
-        if(section.getEnrolledCount()
-                >= section.getMaxCapacity()){
+        // 5. Check capacity
+
+        if (homeroomClass.getEnrolledCount()
+                >= homeroomClass.getMaxCapacity()) {
 
             throw new RuntimeException(
-                    "Section Full");
+                    "Homeroom class is full");
         }
 
-        // 5 Save enrollment
+
+        // 6. Insert enrollment
 
         Integer enrollmentId =
                 enrollmentRepository.insert(request);
 
-        // 6 Update class count
 
-        sectionRepository.incrementEnrollment(
-                request.getSectionId());
+        // 7. Increase class enrolled count
+
+        homeroomClassRepository.incrementEnrollment(
+                request.getHomeroomClassId());
+
+
+        // 8. Return response
 
         EnrollmentResponse response =
                 new EnrollmentResponse();
 
         response.setEnrollmentId(enrollmentId);
         response.setStudentId(request.getStudentId());
-        response.setSectionId(request.getSectionId());
-        response.setStatus(EnrollmentStatus.ACTIVE);
+        response.setHomeroomClassId(
+                request.getHomeroomClassId());
+        response.setAcademicYearId(
+                request.getAcademicYearId());
+        response.setStatus(
+                EnrollmentStatus.ACTIVE);
 
         return response;
     }
 
+
+    // =========================================================
+    // GET BY ID
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -90,71 +128,205 @@ public class EnrollServiceImpl implements EnrollService {
 
         return enrollmentRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Enrollment not found"));
+                        new RuntimeException(
+                                "Enrollment not found"));
     }
+
+
+    // =========================================================
+    // SEARCH
+    // =========================================================
 
     @Override
     @Transactional(readOnly = true)
     public Page<EnrollmentResponse> search(
             String studentId,
-            Integer sectionId,
+            Integer homeroomClassId,
+            Integer academicYearId,
             EnrollmentStatus status,
             Pageable pageable) {
 
         return enrollmentRepository.search(
                 studentId,
-                sectionId,
+                homeroomClassId,
+                academicYearId,
                 status,
                 pageable);
     }
 
+
+    // =========================================================
+    // GET ALL ACTIVE ENROLLMENTS FOR STUDENT
+    // =========================================================
+
     @Override
     @Transactional(readOnly = true)
-    public List<EnrollmentResponse> getActiveEnrollmentsForStudent(
+    public List<EnrollmentResponse>
+    getActiveEnrollmentsForStudent(
             String studentId) {
 
-        return enrollmentRepository.findActiveByStudent(studentId);
+        return enrollmentRepository
+                .findActiveByStudent(studentId);
     }
+
+
+    // =========================================================
+    // GET ENROLLMENT FOR STUDENT + ACADEMIC YEAR
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public EnrollmentResponse getByStudentAndAcademicYear(
+            String studentId,
+            Integer academicYearId) {
+
+        return enrollmentRepository
+                .findByStudentAndAcademicYear(
+                        studentId,
+                        academicYearId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Enrollment not found"));
+    }
+
+
+    // =========================================================
+    // UPDATE STATUS
+    // =========================================================
 
     @Override
     public EnrollmentResponse updateStatus(
             Integer id,
             EnrollmentStatusUpdateRequest request) {
 
-        EnrollmentResponse enrollment = getById(id);
+        EnrollmentResponse enrollment =
+                getById(id);
+
+        EnrollmentStatus oldStatus =
+                enrollment.getStatus();
+
+        EnrollmentStatus newStatus =
+                request.getStatus();
+
+
+        // Nothing changed
+        if (oldStatus == newStatus) {
+            return enrollment;
+        }
+
 
         enrollmentRepository.updateStatus(
                 id,
-                request.getStatus());
+                newStatus);
+
+
+        // ACTIVE -> DROPPED
+        if (oldStatus == EnrollmentStatus.ACTIVE
+                && newStatus == EnrollmentStatus.DROPPED) {
+
+            homeroomClassRepository
+                    .decrementEnrollment(
+                            enrollment.getHomeroomClassId());
+        }
+
+
+        // DROPPED -> ACTIVE
+        if (oldStatus == EnrollmentStatus.DROPPED
+                && newStatus == EnrollmentStatus.ACTIVE) {
+
+            HomeroomClass homeroomClass =
+                    homeroomClassRepository.findById(
+                            enrollment.getHomeroomClassId());
+
+            if (homeroomClass == null) {
+                throw new RuntimeException(
+                        "Homeroom class not found");
+            }
+
+            if (homeroomClass.getEnrolledCount()
+                    >= homeroomClass.getMaxCapacity()) {
+
+                throw new RuntimeException(
+                        "Homeroom class is full");
+            }
+
+            homeroomClassRepository
+                    .incrementEnrollment(
+                            enrollment.getHomeroomClassId());
+        }
+
 
         return getById(id);
     }
 
+
+    // =========================================================
+    // DROP ENROLLMENT
+    // =========================================================
+
     @Override
-    public void drop(Integer id) {
+    public EnrollmentResponse drop(Integer id) {
 
-        EnrollmentResponse enrollment = getById(id);
+        EnrollmentResponse enrollment =
+                getById(id);
 
-        if (enrollment.getStatus() == EnrollmentStatus.DROPPED) {
-            return;
+        if (enrollment.getStatus()
+                == EnrollmentStatus.DROPPED) {
+
+            return enrollment;
         }
 
         enrollmentRepository.updateStatus(
                 id,
                 EnrollmentStatus.DROPPED);
 
-        enrollmentRepository.decrementSectionCount(
-                enrollment.getSectionId());
+        homeroomClassRepository
+                .decrementEnrollment(
+                        enrollment.getHomeroomClassId());
+
+        return getById(id);
     }
+
+
+    // =========================================================
+    // DELETE ENROLLMENT
+    // =========================================================
 
     @Override
     public void delete(Integer id) {
 
-        EnrollmentResponse enrollment = getById(id);
+        EnrollmentResponse enrollment =
+                getById(id);
+
+
+        // Only decrease count if enrollment
+        // was currently active
+
+        if (enrollment.getStatus()
+                == EnrollmentStatus.ACTIVE) {
+
+            homeroomClassRepository
+                    .decrementEnrollment(
+                            enrollment.getHomeroomClassId());
+        }
+
 
         enrollmentRepository.delete(id);
+    }
 
-        enrollmentRepository.decrementSectionCount(
-                enrollment.getSectionId());
+
+    // =========================================================
+    // CHECK STUDENT ENROLLED
+    // =========================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isStudentEnrolled(
+            String studentId,
+            Integer academicYearId) {
+
+        return enrollmentRepository.exists(
+                studentId,
+                academicYearId);
     }
 }
