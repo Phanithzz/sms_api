@@ -10,6 +10,8 @@ public record AdminDashboardResponse(
         long activeStudents,
         long inactiveStudents,
         List<GenderCount> studentGender,
-        AttendanceSummary attendance
+        List<GradeEnrollmentCount> gradeEnrollmentCount,
+        List<ClassEnrollmentSummary> totalClassEnrollmentSummary
+        //AttendanceSummary attendance
 ) {
 }

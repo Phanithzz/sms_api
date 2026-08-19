@@ -1,8 +1,7 @@
 package com.sms.smsApi.service.EnrollService;
 
 import com.sms.smsApi.dto.EnrollmentResponse;
-import com.sms.smsApi.dto.requestDto.EnrollmentRequest;
-import com.sms.smsApi.dto.requestDto.EnrollmentStatusUpdateRequest;
+import com.sms.smsApi.dto.requestDto.*;
 import com.sms.smsApi.model.enums.EnrollmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +16,7 @@ public interface EnrollService {
     EnrollmentResponse getById(
             Integer id);
 
-    Page<EnrollmentResponse> search(
-            String studentId,
-            Integer homeroomClassId,
-            Integer academicYearId,
-            EnrollmentStatus status,
-            Pageable pageable);
+    Page<EnrollmentResponse> search(EnrollSearchFilter request);
 
     List<EnrollmentResponse> getActiveEnrollmentsForStudent(
             String studentId);
@@ -44,4 +38,12 @@ public interface EnrollService {
     boolean isStudentEnrolled(
             String studentId,
             Integer academicYearId);
+
+    // OPTIONS
+
+    List<AcademicYearOption> getAcademicYearOptions();
+
+    List<HomeroomClassOption> getHomeroomClassOptions(
+            Integer academicYearId
+    );
 }

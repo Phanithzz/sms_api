@@ -1,6 +1,7 @@
 package com.sms.smsApi.repository;
 
 
+import com.sms.smsApi.dto.requestDto.AcademicYearOption;
 import com.sms.smsApi.model.AcademicYear;
 import com.sms.smsApi.rowMapper.AcademicYearRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,6 +20,34 @@ public class AcademicYearRepository {
     private final JdbcTemplate jdbcTemplate;
     private final AcademicYearRowMapper rowMapper;
 
+    public List<AcademicYearOption> findOptions() {
+
+        String sql = """
+            SELECT
+                academic_year_id,
+                year_name
+            FROM academic_years
+            WHERE is_current = true
+            ORDER BY start_date DESC
+            """;
+
+        return jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> {
+
+                    AcademicYearOption option =
+                            new AcademicYearOption();
+
+                    option.setAcademicYearId(
+                            rs.getInt("academic_year_id"));
+
+                    option.setName(
+                            rs.getString("year_name"));
+
+                    return option;
+                }
+        );
+    }
     public AcademicYearRepository(JdbcTemplate jdbcTemplate, AcademicYearRowMapper rowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;

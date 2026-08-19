@@ -1,13 +1,16 @@
 package com.sms.smsApi.repository;
 
 import com.sms.smsApi.dto.EnrollmentResponse;
+import com.sms.smsApi.dto.requestDto.EnrollSearchFilter;
 import com.sms.smsApi.dto.requestDto.EnrollmentRequest;
+import com.sms.smsApi.dto.requestDto.GradeEnrollmentCount;
 import com.sms.smsApi.dto.requestDto.SectionResponse;
 import com.sms.smsApi.model.enums.EnrollmentStatus;
 import com.sms.smsApi.rowMapper.EnrollmentRowmapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -295,82 +298,107 @@ public class EnrollmentRepository {
     // =========================================================
 
     public Page<EnrollmentResponse> search(
-            String studentId,
-            Integer homeroomClassId,
-            Integer academicYearId,
-            EnrollmentStatus status,
-            Pageable pageable) {
+            EnrollSearchFilter filter) {
 
         StringBuilder sql = new StringBuilder("""
-                SELECT
-                    enrollment_id,
-                    student_id,
-                    homeroom_class_id,
-                    academic_year_id,
-                    status,
-                    enrolled_at
-                FROM enrollments
-                WHERE 1 = 1
-                """);
+            SELECT
+                enrollment_id,
+                student_id,
+                homeroom_class_id,
+                academic_year_id,
+                status,
+                enrolled_at
+            FROM enrollments
+            WHERE status = 'ACTIVE' 
+            """);
 
-        List<Object> params =
-                new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
 
-        // Student
-        if (studentId != null
-                && !studentId.isBlank()) {
+        // =====================================================
+        // STUDENT
+        // =====================================================
+        if (filter.getKeyword() != null
+                && !filter.getKeyword().isBlank()) {
 
-            sql.append(
-                    " AND student_id = ?");
+            sql.append("""
+            AND (
+                CAST(enrollment_id AS VARCHAR) LIKE ?
+                OR student_id LIKE ?
+            )
+            """);
 
-            params.add(studentId);
+            String keyword = "%" + filter.getKeyword().trim() + "%";
+
+            params.add(keyword);
+            params.add(keyword);
+        }
+        if (filter.getStudentId() != null
+                && !filter.getStudentId().isBlank()) {
+
+            sql.append(" AND student_id = ?");
+            params.add(filter.getStudentId());
         }
 
 
-        // Homeroom Class
-        if (homeroomClassId != null) {
+        // =====================================================
+        // HOMEROOM CLASS
+        // =====================================================
 
-            sql.append(
-                    " AND homeroom_class_id = ?");
+        if (filter.getHomeroomClassId() != null) {
 
-            params.add(homeroomClassId);
+            sql.append(" AND homeroom_class_id = ?");
+            params.add(filter.getHomeroomClassId());
         }
 
 
-        // Academic Year
-        if (academicYearId != null) {
+        // =====================================================
+        // ACADEMIC YEAR
+        // =====================================================
 
-            sql.append(
-                    " AND academic_year_id = ?");
+        if (filter.getAcademicYearId() != null) {
 
-            params.add(academicYearId);
+            sql.append(" AND academic_year_id = ?");
+            params.add(filter.getAcademicYearId());
         }
 
 
-        // Status
-        if (status != null) {
+        // =====================================================
+        // STATUS
+        // =====================================================
 
-            sql.append(
-                    " AND status = ?");
+        if (filter.getStatus() != null) {
 
-            params.add(status.name());
+            sql.append(" AND status = ?");
+            params.add(filter.getStatus().name());
         }
 
 
-        // Pagination
-        sql.append(
-                " ORDER BY enrollment_id DESC");
+        // =====================================================
+        // PAGINATION
+        // =====================================================
 
-        sql.append(
-                " LIMIT ? OFFSET ?");
+        int page = filter.getPage() != null
+                ? filter.getPage()
+                : 0;
 
-        params.add(
-                pageable.getPageSize());
+        int size = filter.getSize() != null
+                ? filter.getSize()
+                : 10;
 
-        params.add(
-                pageable.getOffset());
+        int offset = page * size;
 
+
+        sql.append(" ORDER BY enrollment_id DESC");
+        sql.append(" LIMIT ? OFFSET ?");
+
+        params.add(size);
+        params.add(offset);
+
+
+        // =====================================================
+        // DATA
+        // =====================================================
 
         List<EnrollmentResponse> content =
                 jdbc.query(
@@ -386,49 +414,59 @@ public class EnrollmentRepository {
 
         StringBuilder countSql =
                 new StringBuilder("""
-                        SELECT COUNT(*)
-                        FROM enrollments
-                        WHERE 1 = 1
-                        """);
+                    SELECT COUNT(*)
+                    FROM enrollments
+                    WHERE status = 'ACTIVE'
+                    """);
 
         List<Object> countParams =
                 new ArrayList<>();
 
+        if (filter.getKeyword() != null
+                && !filter.getKeyword().isBlank()) {
 
-        if (studentId != null
-                && !studentId.isBlank()) {
+            countSql.append("""
+            AND (
+                CAST(enrollment_id AS VARCHAR) LIKE ?
+                OR student_id LIKE ?
+            )
+            """);
 
-            countSql.append(
-                    " AND student_id = ?");
+            String keyword = "%" + filter.getKeyword().trim() + "%";
 
-            countParams.add(studentId);
+            countParams.add(keyword);
+            countParams.add(keyword);
+        }
+        // Student
+        if (filter.getStudentId() != null
+                && !filter.getStudentId().isBlank()) {
+
+            countSql.append(" AND student_id = ?");
+            countParams.add(filter.getStudentId());
         }
 
 
-        if (homeroomClassId != null) {
+        // Homeroom Class
+        if (filter.getHomeroomClassId() != null) {
 
-            countSql.append(
-                    " AND homeroom_class_id = ?");
-
-            countParams.add(homeroomClassId);
+            countSql.append(" AND homeroom_class_id = ?");
+            countParams.add(filter.getHomeroomClassId());
         }
 
 
-        if (academicYearId != null) {
+        // Academic Year
+        if (filter.getAcademicYearId() != null) {
 
-            countSql.append(
-                    " AND academic_year_id = ?");
-
-            countParams.add(academicYearId);
+            countSql.append(" AND academic_year_id = ?");
+            countParams.add(filter.getAcademicYearId());
         }
 
 
-        if (status != null) {
+        // Status
+        if (filter.getStatus() != null) {
 
-            countSql.append(
-                    " AND status = ?");
-
-            countParams.add(status.name());
+            countSql.append(" AND status = ?");
+            countParams.add(filter.getStatus().name());
         }
 
 
@@ -440,10 +478,39 @@ public class EnrollmentRepository {
                 );
 
 
+        // =====================================================
+        // RETURN PAGE
+        // =====================================================
+
         return new PageImpl<>(
                 content,
-                pageable,
+                PageRequest.of(page, size),
                 total != null ? total : 0
         );
     }
+
+    public List<GradeEnrollmentCount> countEnrollmentByGrade() {
+
+        String sql = """
+            SELECT
+                hc.grade_level,
+                COUNT(e.enrollment_id) AS student_count
+            FROM enrollments e
+            JOIN homeroom_classes hc
+                ON hc.class_id = e.homeroom_class_id
+            WHERE e.status = 'ACTIVE'
+            GROUP BY hc.grade_level
+            ORDER BY hc.grade_level
+            """;
+
+        return jdbc.query(
+                sql,
+                (rs, rowNum) ->
+                        new GradeEnrollmentCount(
+                                rs.getInt("grade_level"),
+                                rs.getLong("student_count")
+                        )
+        );
+    }
+
 }

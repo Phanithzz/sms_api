@@ -1,12 +1,7 @@
 package com.sms.smsApi.service;
 
-import com.sms.smsApi.dto.requestDto.AdminDashboardResponse;
-import com.sms.smsApi.dto.requestDto.AttendanceSummary;
-import com.sms.smsApi.dto.requestDto.GenderCount;
-import com.sms.smsApi.repository.ClassRepository;
-import com.sms.smsApi.repository.ParentRepository;
-import com.sms.smsApi.repository.StudentRepository;
-import com.sms.smsApi.repository.TeacherRepository;
+import com.sms.smsApi.dto.requestDto.*;
+import com.sms.smsApi.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +14,9 @@ public class DashboardServiceImpl implements DashboardService {
     private final StudentRepository studentRepository;
     private final TeacherRepository teacherRepository;
     private final ParentRepository parentRepository;
-   private final ClassRepository classRepository;
-//    private final AttendanceRepository attendanceRepository;
+    private final ClassRepository classRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final HomeroomClassRepository homeroomClassRepository;
 
     public AdminDashboardResponse getAdminDashboard() {
 
@@ -29,6 +25,9 @@ public class DashboardServiceImpl implements DashboardService {
 
         long inactiveStudents =
                 studentRepository.countInactiveStudents();
+
+        long totalStudents =
+                activeStudents + inactiveStudents;
 
         long totalTeachers =
                 teacherRepository.countActiveTeachers();
@@ -39,21 +38,26 @@ public class DashboardServiceImpl implements DashboardService {
         long totalClasses =
                 classRepository.count();
 
-        List<GenderCount> totalStudentGender =
+        List<GenderCount> studentGender =
                 studentRepository.countStudentGender();
 
-//        AttendanceSummary attendance =
-//                attendanceRepository.getTodaySummary();
+        List<GradeEnrollmentCount> gradeEnrollmentCount =
+                enrollmentRepository.countEnrollmentByGrade();
+
+        List<ClassEnrollmentSummary> totalClassEnrollmentSummary =
+                homeroomClassRepository.getDashboardSummary();
+
 
         return new AdminDashboardResponse(
-                activeStudents + inactiveStudents,
+                totalStudents,
                 totalTeachers,
                 totalParents,
                 totalClasses,
                 activeStudents,
                 inactiveStudents,
-                totalStudentGender,
-                null//attendance
+                studentGender,
+                gradeEnrollmentCount,
+                totalClassEnrollmentSummary
         );
     }
 }

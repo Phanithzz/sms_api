@@ -1,10 +1,10 @@
 package com.sms.smsApi.service.EnrollService;
 
 import com.sms.smsApi.dto.EnrollmentResponse;
-import com.sms.smsApi.dto.requestDto.EnrollmentRequest;
-import com.sms.smsApi.dto.requestDto.EnrollmentStatusUpdateRequest;
+import com.sms.smsApi.dto.requestDto.*;
 import com.sms.smsApi.model.HomeroomClass;
 import com.sms.smsApi.model.enums.EnrollmentStatus;
+import com.sms.smsApi.repository.AcademicYearRepository;
 import com.sms.smsApi.repository.EnrollmentRepository;
 import com.sms.smsApi.repository.HomeroomClassRepository;
 import com.sms.smsApi.repository.StudentRepository;
@@ -24,8 +24,22 @@ public class EnrollServiceImpl implements EnrollService {
     private final StudentRepository studentRepository;
     private final HomeroomClassRepository homeroomClassRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final AcademicYearRepository academicYearRepository;
+    @Override
+    @Transactional(readOnly = true)
+    public List<AcademicYearOption> getAcademicYearOptions() {
 
+        return academicYearRepository.findOptions();
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<HomeroomClassOption> getHomeroomClassOptions(
+            Integer academicYearId) {
+
+        return homeroomClassRepository
+                .findEnrollmentOptions(academicYearId);
+    }
     // =========================================================
     // ENROLL STUDENT
     // =========================================================
@@ -139,19 +153,9 @@ public class EnrollServiceImpl implements EnrollService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<EnrollmentResponse> search(
-            String studentId,
-            Integer homeroomClassId,
-            Integer academicYearId,
-            EnrollmentStatus status,
-            Pageable pageable) {
+    public Page<EnrollmentResponse> search(EnrollSearchFilter request) {
 
-        return enrollmentRepository.search(
-                studentId,
-                homeroomClassId,
-                academicYearId,
-                status,
-                pageable);
+        return enrollmentRepository.search(request);
     }
 
 

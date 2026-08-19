@@ -1,8 +1,10 @@
 package com.sms.smsApi.controller;
 
 import com.sms.smsApi.dto.EnrollmentResponse;
+import com.sms.smsApi.dto.requestDto.EnrollSearchFilter;
 import com.sms.smsApi.dto.requestDto.EnrollmentRequest;
 import com.sms.smsApi.dto.requestDto.EnrollmentStatusUpdateRequest;
+import com.sms.smsApi.dto.requestDto.StudentRequestFilter;
 import com.sms.smsApi.model.enums.EnrollmentStatus;
 import com.sms.smsApi.service.EnrollService.EnrollService;
 import jakarta.validation.Valid;
@@ -56,42 +58,33 @@ public class EnrollmentController {
                 enrollService.getById(id));
     }
 
+    @GetMapping("/options/academic-years")
+    public ResponseEntity<?> getAcademicYearOptions() {
+
+        return ResponseEntity.ok(
+                enrollService.getAcademicYearOptions()
+        );
+    }
+
+    @GetMapping("/options/homeroom-classes")
+    public ResponseEntity<?> getHomeroomClassOptions(
+            @RequestParam Integer academicYearId) {
+
+        return ResponseEntity.ok(
+                enrollService.getHomeroomClassOptions(
+                        academicYearId
+                )
+        );
+    }
 
     // =========================================================
     // SEARCH
     // GET /api/v1/enrollments/search
     // =========================================================
-
-    @GetMapping("/search")
-    public ResponseEntity<Page<EnrollmentResponse>> search(
-
-            @RequestParam(required = false)
-            String studentId,
-
-            @RequestParam(required = false)
-            Integer homeroomClassId,
-
-            @RequestParam(required = false)
-            Integer academicYearId,
-
-            @RequestParam(required = false)
-            EnrollmentStatus status,
-
-            @PageableDefault(
-                    size = 10,
-                    sort = "enrollment_id",
-                    direction = Sort.Direction.DESC)
-            Pageable pageable) {
-
-        return ResponseEntity.ok(
-                enrollService.search(
-                        studentId,
-                        homeroomClassId,
-                        academicYearId,
-                        status,
-                        pageable));
+    @PostMapping("/search")
+    public ResponseEntity<?> search(@RequestBody EnrollSearchFilter request) {
+        return ResponseEntity.ok(enrollService.search(request));
     }
-
 
     // =========================================================
     // GET ACTIVE ENROLLMENTS FOR STUDENT

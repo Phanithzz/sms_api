@@ -1,5 +1,6 @@
 package com.sms.smsApi.model;
 
+import com.sms.smsApi.model.enums.EnrollmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,5 +16,5 @@ public class Enrollment {
     private String studentId;
     private Integer sectionId;
     private LocalDate enrolledDate;
-    private String status;
+    private EnrollmentStatus status;
 }
