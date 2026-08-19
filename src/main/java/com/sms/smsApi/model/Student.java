@@ -63,6 +63,7 @@ public class Student {
     private String currentAddress;
 
     private String province;
+    private String email;
 
     @Column(name = "grade_level")
     private Integer gradeLevel;

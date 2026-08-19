@@ -31,7 +31,7 @@ public class StudentResponse {
     private String fullNameEn;
 
     private String fullNameKh;
-    //private String email;
+    private String email;
 
     private String gender;
 

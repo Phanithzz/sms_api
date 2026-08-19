@@ -67,7 +67,7 @@ public class StudentRequest {
     @DecimalMax(value = "4.00", message = "GPA cannot exceed 4.00")
     private BigDecimal gpa;
 
-    private MultipartFile profilePhoto;
+    private String profilePhoto;
 
     private String emergencyContactName;
 

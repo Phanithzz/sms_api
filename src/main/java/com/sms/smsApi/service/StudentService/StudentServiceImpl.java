@@ -247,6 +247,7 @@ public class StudentServiceImpl implements StudentService{
 
         existing.setFullNameEn(student.getFirstNameEn() + student.getLastNameEn());
         existing.setFullNameKh(student.getFirstNameKh() + student.getLastNameKh());
+        existing.setEmail(student.getEmail());
 
         existing.setGender(student.getGender());
         existing.setDateOfBirth(student.getDateOfBirth());
@@ -315,7 +316,7 @@ public class StudentServiceImpl implements StudentService{
                 s.getStudentLastNameKh(),
                 s.getFullNameEn(),
                 s.getFullNameKh(),
-                //s.getEmail(),
+                s.getEmail(),
                 s.getGender(),
                 s.getDateOfBirth(),
                 s.getPlaceOfBirth(),
