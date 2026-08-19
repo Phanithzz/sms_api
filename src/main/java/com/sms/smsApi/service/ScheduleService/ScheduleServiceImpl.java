@@ -16,7 +16,18 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleResponse> getStudentSchedule(
+            String studentId,
+            Integer academicYearId
+    ) {
 
+        return scheduleRepository.findByStudent(
+                studentId,
+                academicYearId
+        );
+    }
     @Override
     public ScheduleResponse create(
             ScheduleRequest request) {

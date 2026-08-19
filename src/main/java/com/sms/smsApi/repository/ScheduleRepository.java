@@ -363,4 +363,86 @@ public class ScheduleRepository {
                 id
         );
     }
+
+
+    public List<ScheduleResponse> findByStudent(
+            String studentId,
+            Integer academicYearId
+    ) {
+        String sql = """
+            SELECT
+                s.schedule_id,
+
+                s.section_id,
+                cs.section_code,
+
+                cs.subject_id,
+                sub.subject_code,
+                sub.subject_name_en,
+                sub.subject_name_kh,
+
+                s.homeroom_class_id,
+                hc.class_code,
+                hc.grade_level,
+
+                cs.teacher_id,
+
+                CONCAT(
+                    t.first_name_en,
+                    ' ',
+                    t.last_name_en
+                ) AS teacher_name,
+
+                s.classroom_id,
+                c.classroom_name,
+
+                s.academic_year_id,
+
+                s.day_of_week,
+                s.period_number,
+                s.start_time,
+                s.end_time
+FROM schedules s
+
+            JOIN class_sections cs
+                ON cs.section_id = s.section_id
+
+            JOIN subjects sub
+                ON sub.subject_id = cs.subject_id
+
+            JOIN homeroom_classes hc
+                ON hc.class_id = s.homeroom_class_id
+
+            JOIN teachers t
+                ON t.teacher_id = cs.teacher_id
+
+            JOIN classrooms c
+                ON c.classroom_id = s.classroom_id
+
+            JOIN enrollments e
+                ON e.homeroom_class_id = s.homeroom_class_id
+                AND e.academic_year_id = s.academic_year_id
+
+            WHERE e.student_id = ?
+              AND e.academic_year_id = ?
+
+            ORDER BY
+                CASE s.day_of_week
+                    WHEN 'MONDAY' THEN 1
+                    WHEN 'TUESDAY' THEN 2
+                    WHEN 'WEDNESDAY' THEN 3
+                    WHEN 'THURSDAY' THEN 4
+                    WHEN 'FRIDAY' THEN 5
+                    WHEN 'SATURDAY' THEN 6
+                END,
+                s.period_number
+            """;
+
+        return jdbcTemplate.query(
+                sql,
+                scheduleMapper,
+                studentId,
+                academicYearId
+        );
+    }
 }

@@ -48,7 +48,19 @@ public class ScheduleController {
         );
     }
 
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<?> getStudentSchedule(
+            @PathVariable String studentId,
+            @RequestParam Integer academicYearId
+    ) {
 
+        return ResponseEntity.ok(
+                scheduleService.getStudentSchedule(
+                        studentId,
+                        academicYearId
+                )
+        );
+    }
     @GetMapping("/teacher/{teacherId}")
     public ResponseEntity<?> getByTeacher(
             @PathVariable String teacherId,
