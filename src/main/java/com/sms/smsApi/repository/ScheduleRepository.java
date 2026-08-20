@@ -446,48 +446,77 @@ FROM schedules s
         );
     }
 
-
     public List<ScheduleResponse> getAllSchedules(Integer academicYearId) {
 
         String sql = """
         SELECT
             s.schedule_id,
+
+            -- SECTION
             s.section_id,
+            cs.section_code,
+
+            -- SUBJECT
+            sub.subject_id,
+            sub.subject_code,
+            sub.subject_name_en,
+            sub.subject_name_kh,
+
+            -- HOMEROOM CLASS
             s.homeroom_class_id,
+            hc.class_code,
+            hc.grade_level,
+
+            -- TEACHER
+            t.teacher_id,
+            CONCAT(
+                t.first_name_en,
+                ' ',
+                t.last_name_en
+            ) AS teacher_name,
+
+            -- CLASSROOM
             s.classroom_id,
+            c.classroom_name,
+
+            -- ACADEMIC YEAR
             s.academic_year_id,
+
+            -- SCHEDULE
             s.day_of_week,
             s.period_number,
             s.start_time,
-            s.end_time,
-
-            cs.section_code,
-            c.classroom_name,
-            hc.class_name
+            s.end_time
 
         FROM schedules s
 
         JOIN class_sections cs
             ON cs.section_id = s.section_id
 
+        JOIN subjects sub
+            ON sub.subject_id = cs.subject_id
+
+        JOIN homeroom_classes hc
+            ON hc.class_id = s.homeroom_class_id
+
         JOIN classrooms c
             ON c.classroom_id = s.classroom_id
 
-        JOIN homeroom_classes hc
-            ON hc.homeroom_class_id = s.homeroom_class_id
+        LEFT JOIN teachers t
+            ON t.teacher_id = cs.teacher_id
 
         WHERE s.academic_year_id = ?
 
         ORDER BY
             s.day_of_week,
             s.period_number,
-            hc.class_name,
+            hc.class_code,
             c.classroom_name
         """;
 
         return jdbcTemplate.query(
                 sql,
-                scheduleMapper,
+                new ScheduleRowMapper(),
                 academicYearId
         );
     }
