@@ -22,7 +22,7 @@ public interface ScheduleService {
     );
 
     void delete(Integer id);
-
+    List<ScheduleResponse> getAllSchedules(Integer academicYearId);
     List<ScheduleResponse> getStudentSchedule(
             String studentId,
             Integer academicYearId

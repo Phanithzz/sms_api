@@ -6,13 +6,10 @@ import com.sms.smsApi.dto.VerifyUserDto;
 import com.sms.smsApi.exception.AccountDisabledException;
 import com.sms.smsApi.exception.InvalidCredentialsException;
 import com.sms.smsApi.exception.VerificationCodeExpiredException;
-import com.sms.smsApi.model.Token;
-import com.sms.smsApi.model.TokenType;
-import com.sms.smsApi.model.User;
+import com.sms.smsApi.model.*;
 import com.sms.smsApi.reponse.AuthResponse;
 import com.sms.smsApi.reponse.LoginResponse;
-import com.sms.smsApi.repository.TokenRepository;
-import com.sms.smsApi.repository.UserRepository;
+import com.sms.smsApi.repository.*;
 import com.sms.smsApi.service.EmailService.EmailService;
 import com.sms.smsApi.service.UserService.UserService;
 import jakarta.mail.MessagingException;
@@ -69,6 +66,9 @@ public class AuthServiceImpl implements AuthService {
     private final TokenRepository tokenRepository;
     private final JwtService jwtService;
     private final JdbcTemplate jdbcTemplate;
+    private final StudentRepository studentRepository;
+    private final TeacherRepository teacherRepository;
+    private final ParentRepository parentRepository;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -78,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
                            EmailService emailService,
                            UserService userService,
                            TokenRepository tokenRepository,
-                           JwtService jwtService, JdbcTemplate jdbcTemplate) {
+                           JwtService jwtService, JdbcTemplate jdbcTemplate, StudentRepository studentRepository, TeacherRepository teacherRepository, ParentRepository parentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -87,6 +87,9 @@ public class AuthServiceImpl implements AuthService {
         this.tokenRepository = tokenRepository;
         this.jwtService = jwtService;
         this.jdbcTemplate = jdbcTemplate;
+        this.studentRepository = studentRepository;
+        this.teacherRepository = teacherRepository;
+        this.parentRepository = parentRepository;
     }
 
     @Override
@@ -478,16 +481,69 @@ public class AuthServiceImpl implements AuthService {
      * FIX: Extracted shared login flow used by both authenticate() and verifyAndLogin()
      *      to avoid duplication and ensure consistent behaviour.
      */
-    private LoginResponse issueTokensAndBuildResponse(User user, HttpServletResponse response) {
+    private LoginResponse issueTokensAndBuildResponse(
+            User user,
+            HttpServletResponse response
+    ) {
+
         revokeAllUserTokens(user);
 
+        Long userId = user.getUserId();
+
+        List<String> roles = userRepository.findRolesByUserId(userId);
+
+        String studentId = null;
+        String teacherId = null;
+        String parentId = null;
+
+        for (String role : roles) {
+
+            switch (role) {
+
+                case "STUDENT" -> {
+                    studentId = studentRepository
+                            .findByUserId(userId.intValue())
+                            .map(Student::getStudentId)
+                            .orElse(null);
+                }
+
+                case "TEACHER" -> {
+                    teacherId = teacherRepository
+                            .findByUserId(userId.intValue())
+                            .map(Teacher::getTeacherId)
+                            .orElse(null);
+                }
+
+                case "PARENT" -> {
+                    parentId = parentRepository
+                            .findByUserId(userId.intValue())
+                            .map(Parent::getParentId)
+                            .orElse(null);
+                }
+
+                case "ADMIN" -> {
+                    // Admin doesn't have a role-specific ID
+                }
+            }
+        }
+
         String jwtToken = jwtService.generateToken(user);
+
         String refreshToken = jwtService.generateRefreshToken(user);
 
         saveUserToken(user, refreshToken);
-        response.addCookie(createRefreshTokenCookie(refreshToken));
 
-        return LoginResponse.success(jwtToken, user);
+        response.addCookie(
+                createRefreshTokenCookie(refreshToken)
+        );
+
+        return LoginResponse.success(
+                jwtToken,
+                user,
+                studentId,
+                teacherId,
+                parentId
+        );
     }
 
     /**

@@ -445,4 +445,50 @@ FROM schedules s
                 academicYearId
         );
     }
+
+
+    public List<ScheduleResponse> getAllSchedules(Integer academicYearId) {
+
+        String sql = """
+        SELECT
+            s.schedule_id,
+            s.section_id,
+            s.homeroom_class_id,
+            s.classroom_id,
+            s.academic_year_id,
+            s.day_of_week,
+            s.period_number,
+            s.start_time,
+            s.end_time,
+
+            cs.section_code,
+            c.classroom_name,
+            hc.class_name
+
+        FROM schedules s
+
+        JOIN class_sections cs
+            ON cs.section_id = s.section_id
+
+        JOIN classrooms c
+            ON c.classroom_id = s.classroom_id
+
+        JOIN homeroom_classes hc
+            ON hc.homeroom_class_id = s.homeroom_class_id
+
+        WHERE s.academic_year_id = ?
+
+        ORDER BY
+            s.day_of_week,
+            s.period_number,
+            hc.class_name,
+            c.classroom_name
+        """;
+
+        return jdbcTemplate.query(
+                sql,
+                scheduleMapper,
+                academicYearId
+        );
+    }
 }

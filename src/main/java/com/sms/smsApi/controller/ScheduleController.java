@@ -74,6 +74,14 @@ public class ScheduleController {
         );
     }
 
+    @GetMapping("/admin")
+    public ResponseEntity<?> getAllSchedules(
+            @RequestParam Integer academicYearId) {
+
+        return ResponseEntity.ok(
+                scheduleService.getAllSchedules(academicYearId)
+        );
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(

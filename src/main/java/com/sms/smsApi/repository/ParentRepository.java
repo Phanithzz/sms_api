@@ -7,8 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface ParentRepository extends JpaRepository<Parent, String> {
+    Optional<Parent> findByUserId(Integer userId);
+
     @Query(value = """
     SELECT p.parent_id
     FROM parents p

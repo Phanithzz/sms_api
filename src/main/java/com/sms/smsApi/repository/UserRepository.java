@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -37,4 +38,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     Page<User> searchActiveUsers(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+
+    @Query("""
+    SELECT r.roleName
+    FROM User u
+    JOIN u.roles r
+    WHERE u.userId = :userId
+""")
+    List<String> findRolesByUserId(@Param("userId") Long userId);
+
 }

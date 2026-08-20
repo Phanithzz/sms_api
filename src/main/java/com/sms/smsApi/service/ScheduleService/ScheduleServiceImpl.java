@@ -15,7 +15,9 @@ import java.util.List;
 public class ScheduleServiceImpl implements ScheduleService {
 
     private final ScheduleRepository scheduleRepository;
-
+    public List<ScheduleResponse> getAllSchedules(Integer academicYearId) {
+        return scheduleRepository.getAllSchedules(academicYearId);
+    }
     @Override
     @Transactional(readOnly = true)
     public List<ScheduleResponse> getStudentSchedule(
